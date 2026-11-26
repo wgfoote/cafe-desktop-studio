@@ -1,0 +1,58 @@
+{
+  "name": "cafe-desktop",
+  "productName": "Cafe",
+  "version": "1.0.0",
+  "description": "The Café studios in their own offline window, with a data folder on the thumb drive",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node test/paths.test.js",
+    "dist:win": "electron-builder --win portable --x64",
+    "dist:mac": "electron-builder --mac zip --x64 --arm64",
+    "dist:linux": "electron-builder --linux AppImage --x64"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "edu.cafe.desktop",
+    "productName": "Cafe",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "paths.js",
+      "app/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "electronLanguages": [
+      "en-US"
+    ],
+    "win": {
+      "artifactName": "Cafe for Windows.exe"
+    },
+    "portable": {
+      "requestExecutionLevel": "user"
+    },
+    "mac": {
+      "category": "public.app-category.education",
+      "identity": null,
+      "artifactName": "Cafe for Mac (${arch}).zip"
+    },
+    "linux": {
+      "category": "Education",
+      "artifactName": "Cafe for Linux.AppImage"
+    },
+    "publish": null
+  },
+  "author": {
+    "name": "Café course",
+    "email": "cafe@example.edu"
+  },
+  "license": "UNLICENSED"
+}

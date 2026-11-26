@@ -1,0 +1,1647 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Café Code Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a three-pane workbench (lesson notes | code | result and console) under a slim bar of lesson tabs; panes stack on narrow screens. */
+:root {
+  --bg: #eef2f0; --surface: #ffffff; --ink: #1b2422; --muted: #5a6a65; --line: #d3dcd8;
+  --accent: #0e6b5b; --accent-ink: #ffffff; --accent-soft: #dcece7;
+  --code-bg: #fbfcfb; --gutter: #f1f4f2; --gutter-ink: #9aa8a3;
+  --warn: #8a5a00; --err: #b00020; --err-soft: #fbe9ec;
+  --display: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111816; --surface: #182120; --ink: #e3ebe8; --muted: #9badA7; --line: #2a3633;
+  --accent: #4cb59d; --accent-ink: #0b1513; --accent-soft: #1d3530;
+  --code-bg: #141b19; --gutter: #182120; --gutter-ink: #5f716b;
+  --warn: #e0b45a; --err: #ff7a8a; --err-soft: #3a1d22; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111816; --surface: #182120; --ink: #e3ebe8; --muted: #9badA7; --line: #2a3633;
+  --accent: #4cb59d; --accent-ink: #0b1513; --accent-soft: #1d3530;
+  --code-bg: #141b19; --gutter: #182120; --gutter-ink: #5f716b;
+  --warn: #e0b45a; --err: #ff7a8a; --err-soft: #3a1d22; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; }
+.app { height: 100%; display: flex; flex-direction: column; }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding-block: 10px 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); border-bottom: 1px solid var(--line); background: var(--surface); }
+.brand { display: flex; align-items: baseline; gap: 10px; padding-bottom: 10px; }
+.brand b { font-family: var(--display); font-weight: 600; font-size: 18px; letter-spacing: -0.01em; }
+.brand span { color: var(--muted); font-size: 13px; }
+.tabs { display: flex; gap: 2px; overflow-x: auto; min-width: 0; flex: 1; scrollbar-width: thin; }
+.tabs button { border: 0; background: transparent; color: var(--muted); padding: 8px 12px 10px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap; }
+.tabs button:hover { color: var(--ink); }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 500; }
+.tabs .n { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-right: 6px; }
+.tabs .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--warn); margin-left: 6px; vertical-align: 2px; }
+
+/* workbench */
+.work { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(260px, 0.85fr) minmax(0, 1.25fr) minmax(0, 1.15fr); }
+.pane { min-width: 0; min-height: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+.pane:last-child { border-right: 0; }
+.bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--surface); min-height: 44px; }
+.label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.bar .spacer { flex: 1; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 5px 11px; cursor: pointer; font-size: 13px; }
+.btn:hover { border-color: var(--muted); }
+.btn.run { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; padding: 5px 14px; }
+.btn.run:hover { filter: brightness(1.08); }
+.hint { color: var(--muted); font-size: 12px; }
+
+/* notes */
+.notes .scroll { overflow-y: auto; padding: 14px 18px 28px; }
+.notes h2 { font-family: var(--display); font-weight: 600; font-size: 21px; margin: 4px 0 10px; text-wrap: balance; letter-spacing: -0.01em; }
+.notes h3 { font-size: 12px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin: 20px 0 6px; }
+.notes p, .notes li { line-height: 1.6; max-width: 62ch; }
+.notes ul, .notes ol { padding-left: 20px; margin: 6px 0; }
+.notes li { margin: 4px 0; }
+.notes code { font-family: var(--mono); font-size: 12.5px; background: var(--accent-soft); padding: 1px 4px; border-radius: 3px; }
+.hood { margin-top: 20px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--surface); line-height: 1.55; border-radius: 0 6px 6px 0; }
+.hood b { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; }
+.pager { display: flex; justify-content: space-between; gap: 8px; margin-top: 22px; }
+
+/* editor */
+.ed { position: relative; flex: 1; min-height: 0; background: var(--code-bg); }
+.ed pre, .ed textarea { font-family: var(--mono); font-size: 13px; line-height: 1.55; tab-size: 2; margin: 0; }
+#gut { position: absolute; top: 0; left: 0; bottom: 0; width: 46px; overflow: hidden; padding: 10px 8px 10px 0; text-align: right; color: var(--gutter-ink); background: var(--gutter); border-right: 1px solid var(--line); user-select: none; box-sizing: border-box; }
+#code { position: absolute; inset: 0; width: 100%; height: 100%; box-sizing: border-box; padding: 10px 12px 10px 56px; border: 0; resize: none; background: transparent; color: var(--ink); white-space: pre; overflow: auto; outline: none; }
+#code:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }
+.status { font-family: var(--mono); font-size: 11.5px; color: var(--muted); padding: 4px 12px; border-top: 1px solid var(--line); background: var(--surface); display: flex; gap: 14px; }
+
+/* result and console */
+.res { flex: 1; min-height: 0; background: #ffffff; }
+#frame { width: 100%; height: 100%; border: 0; display: block; background: #ffffff; }
+.con { height: 32%; min-height: 110px; display: flex; flex-direction: column; border-top: 1px solid var(--line); background: var(--surface); }
+.con .bar { min-height: 34px; padding: 4px 12px; }
+#log { flex: 1; overflow: auto; font-family: var(--mono); font-size: 12.5px; padding: 6px 0; margin: 0; }
+#log div { padding: 2px 12px; white-space: pre-wrap; word-break: break-word; border-bottom: 1px solid var(--line); line-height: 1.45; }
+#log .warn { color: var(--warn); }
+#log .error { color: var(--err); background: var(--err-soft); cursor: pointer; }
+#log .empty { color: var(--muted); border: 0; font-family: var(--body); font-style: italic; }
+#log .t { white-space: pre; overflow-x: auto; }
+
+@media (max-width: 1100px) {
+  .work { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .notes { grid-column: 1 / -1; max-height: 36vh; border-right: 0; border-bottom: 1px solid var(--line); }
+}
+@media (max-width: 760px) {
+  .app { height: auto; min-height: 100%; }
+  .work { display: flex; flex-direction: column; }
+  .notes { max-height: none; }
+  .pane { border-right: 0; border-bottom: 1px solid var(--line); }
+  .editor .ed { height: 60vh; flex: none; }
+  .result .res { height: 60vh; flex: none; }
+  .con { height: 220px; }
+  .brand span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand"><b>Café Code Lab</b><span>what runs under the hood of the Cafés</span></div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="Lessons"></nav>
+  </header>
+  <main class="work">
+    <section class="pane notes" aria-label="Lesson notes"><div class="scroll" id="notes"></div></section>
+    <section class="pane editor" aria-label="Code">
+      <div class="bar">
+        <button class="btn run" id="run" title="Run the page (Ctrl+Enter)">Run ▸</button>
+        <span class="hint">Ctrl+Enter</span>
+        <span class="spacer"></span>
+        <button class="btn" id="reset" title="Put back the lesson's original code">Reset</button>
+        <button class="btn" id="copy">Copy</button>
+        <button class="btn" id="save" title="Save this page as an .html file that opens in any browser">Save .html</button>
+      </div>
+      <div class="ed"><pre id="gut" aria-hidden="true">1</pre><textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off" aria-label="Code editor"></textarea></div>
+      <div class="status"><span id="pos">line 1, column 1</span><span id="saved"></span></div>
+    </section>
+    <section class="pane result" aria-label="Result">
+      <div class="bar"><span class="label">Result</span><span class="spacer"></span><span class="hint" id="ran"></span></div>
+      <div class="res"><iframe id="frame" title="Result of running the code" sandbox="allow-scripts allow-modals allow-forms"></iframe></div>
+      <div class="con">
+        <div class="bar"><span class="label">Console</span><span class="spacer"></span><button class="btn" id="clear">Clear</button></div>
+        <div id="log" role="log" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<template id="n1" data-title="Hello, café" data-short="Hello">
+<h2>Hello, café</h2>
+<p>JavaScript is the language every web browser understands. It has nothing to do with Java, the other programming language, nor with the island, nor directly with the coffee. In 1995 Netscape wanted a small scripting language for its browser; Brendan Eich wrote the first version in ten days, and the marketing department borrowed the name of Java, which was fashionable that year. Java itself had been named after coffee, which is named after the island. So the café connection is real, two steps removed.</p>
+<p>A web page has three layers. <b>HTML</b> says what is on the page (a heading, a box, a button). <b>CSS</b>, inside <code>&lt;style&gt;</code>, says how it looks. <b>JavaScript</b>, inside <code>&lt;script&gt;</code>, says what happens. The editor holds a whole page; <b>Run</b> hands it to the browser, which draws it on the right.</p>
+<h3>What to notice</h3>
+<ul>
+<li><code>let</code> and <code>const</code> make named boxes for values. Text goes in quotes.</li>
+<li><code>console.log(...)</code> writes to the Console panel under the result. It is for you, not for the reader of the page.</li>
+<li><b>Input</b> is reading <code>box.value</code>; <b>output</b> is setting <code>out.textContent</code>. The function inside <code>addEventListener</code> waits until the button is clicked.</li>
+</ul>
+<h3>Try this</h3>
+<ul>
+<li>Change <code>cups</code> to 3 and press Run (or Ctrl+Enter).</li>
+<li>Delete one closing quote and run: the Console names the line with the mistake.</li>
+<li>Make the bill show two decimals: replace <code>bill</code> in the output with <code>bill.toFixed(2)</code>.</li>
+</ul>
+<div class="hood"><b>In the Cafés</b> Each studio is one file of exactly this kind: HTML for the cards and tabs, CSS for the look, and a few thousand lines of JavaScript for the statistics. Nothing is installed and nothing is sent to a server; the browser does all the work.</div>
+</template>
+
+<template id="n2" data-title="Data in, numbers out" data-short="Data">
+<h2>Data in, numbers out</h2>
+<p>Every analysis starts by turning text into numbers. A CSV file is just text: lines separated by line breaks, values separated by commas. The function <code>readCSV</code> does what R's <code>read.csv</code> does, in a dozen lines.</p>
+<h3>New ideas</h3>
+<ul>
+<li>An <b>array</b> is a numbered list: <code>[3.5, 2.5, 4.1]</code>. Counting starts at 0, so <code>d.wait[0]</code> is the first wait.</li>
+<li>An <b>object</b> is a set of named boxes: <code>d.wait</code>, <code>d.cafe</code>. It is how the data frame is kept here.</li>
+<li><code>split(",")</code> cuts text into pieces; <code>Number("4.1")</code> turns text into a number.</li>
+<li>A <b>for loop</b> repeats a step: <code>for (const w of d.wait)</code> visits each wait in turn.</li>
+<li><b>Formatting</b> is for people: <code>toFixed(2)</code> rounds for display, <code>padStart(6)</code> lines up columns, and a template string <code>`...${x}...`</code> drops values into text.</li>
+</ul>
+<p>Why does the raw total show a long tail of digits? Computers store numbers in binary, where 0.1 has no exact form, just as one third has none in decimals. R hides this by printing 7 significant digits; JavaScript shows everything.</p>
+<h3>Try this</h3>
+<ul>
+<li>Add a row <code>6,0,7.5</code> at the bottom of the box and press the button.</li>
+<li>Type a letter in place of a number. What does <code>Number</code> make of it? (Look for <code>NaN</code>, "not a number".)</li>
+<li>Print the largest wait with <code>Math.max(...d.wait)</code>.</li>
+</ul>
+<div class="hood"><b>In the Cafés</b> The Data card does this with more care: quoted text, missing values, level names, and the preparation lines such as <code>log_gdp_std &lt;- ...</code>, which are themselves parsed (lesson 6).</div>
+</template>
+
+<template id="n3" data-title="Decisions, loops and functions" data-short="Control">
+<h2>Decisions, loops and functions</h2>
+<p>Three ideas carry almost every program: <b>decide</b> (if this, do that), <b>repeat</b> (do it for every row, or until something happens), and <b>package</b> a recipe under a name (a function) so it can be used again.</p>
+<h3>New ideas</h3>
+<ul>
+<li><code>if (...) { } else { }</code> chooses one branch. Comparisons: <code>&lt;</code>, <code>&gt;</code>, <code>===</code> (equal), <code>!==</code> (not equal).</li>
+<li><code>for (let i = 0; i &lt; n; i++)</code> counts from 0 to n − 1. <code>while (...)</code> repeats until its condition fails.</li>
+<li><code>function mean(xs) { ... return ...; }</code> defines a recipe; <code>mean(waits)</code> uses it.</li>
+<li><b>Seeds.</b> A computer's "random" numbers come from a formula. Start it from the same seed and you get the same numbers, which is why McElreath writes <code>set.seed(7)</code>. <code>Math.random()</code> has no seed, so the studios carry their own generator.</li>
+<li>Normal draws from uniform ones: the Box–Muller recipe turns two uniform numbers into one standard normal. This is <code>rnorm</code> under the hood.</li>
+</ul>
+<h3>Try this</h3>
+<ul>
+<li>Run twice with seed 42: identical. Change the seed: different, but similar summaries.</li>
+<li>Set visits to 10, then to 100,000. Watch the summaries settle as n grows.</li>
+<li>Make afternoons 70% of visits by changing <code>0.5</code>.</li>
+</ul>
+<div class="hood"><b>In the Cafés</b> Prior draws, simulated outcomes and each sampler chain start from a seed this way, so a fit can be repeated exactly. The 5.5% and 94.5% quantiles are McElreath's default 89% interval.</div>
+</template>
+
+<template id="n4" data-title="Tables" data-short="Tables">
+<h2>Tables: a home-made precis</h2>
+<p>A table on a web page is HTML built as text: a <code>&lt;table&gt;</code> holds rows <code>&lt;tr&gt;</code>, and each row holds cells, <code>&lt;th&gt;</code> for headings and <code>&lt;td&gt;</code> for data. The program glues the pieces together with <code>+</code> and hands the result to <code>innerHTML</code>, and the browser draws it.</p>
+<h3>New ideas</h3>
+<ul>
+<li><code>filter</code> keeps the rows that pass a test: mornings only, or one café only.</li>
+<li>The little histograms are text: eight bins, each count drawn as one of the block characters ▁▂▃▄▅▆▇█, as <code>precis()</code> prints in R.</li>
+<li>CSS classes (<code>class='num'</code>) right-align numbers and use digits of equal width, so columns line up.</li>
+<li><code>console.table(rows)</code> prints a list of objects as a table in the Console.</li>
+</ul>
+<h3>Try this</h3>
+<ul>
+<li>Add a row to the precis for café 3 only: <code>"café 3": d.wait.filter(function (w, i) { return d.cafe[i] === 3; })</code>.</li>
+<li>Show three decimals in the mean column.</li>
+<li>Add a column for the median: <code>quantile(xs, 0.5)</code>.</li>
+</ul>
+<div class="hood"><b>In the Cafés</b> The Summary tab is this function grown up: more columns (n_eff, Rhat, Tukey's five numbers), a choice of interval, and the same text histograms.</div>
+</template>
+
+<template id="n5" data-title="Pictures from numbers" data-short="Plots">
+<h2>Pictures from numbers</h2>
+<p>Every chart rests on one idea: a <b>scale</b>, a straight-line map from data values to pixel positions. Café 1 to 5 maps to 50 to 500 pixels across; 0 to 6 minutes maps to 255 to 20 pixels up the page (screen pixels count downward, so the map flips). After that a plot is shapes placed with the scales: <code>&lt;circle&gt;</code>, <code>&lt;line&gt;</code>, <code>&lt;rect&gt;</code>, <code>&lt;text&gt;</code>, written in SVG, the drawing language of the web.</p>
+<h3>New ideas</h3>
+<ul>
+<li><code>scale(d0, d1, r0, r1)</code> returns a function: a function that makes functions. <code>x(3)</code> then gives the pixel for café 3.</li>
+<li>Axes are lines plus tick marks plus labels, all drawn by hand.</li>
+<li>A histogram counts values into bins, then draws one rectangle per bin.</li>
+</ul>
+<p>Libraries such as d3 package these steps: <code>d3.scaleLinear().domain([0, 6]).range([255, 20])</code> is the <code>scale</code> function here, and <code>d3.axisLeft</code> draws the ticks. Knowing the bare version makes the library easy to read.</p>
+<h3>Try this</h3>
+<ul>
+<li>Change the y scale to run from 0 to 8 minutes, in the scale and in the tick loop.</li>
+<li>Make the afternoon points orange: replace <code>#0e6b5b</code> in the open-circle style.</li>
+<li>Use 48 bins in the histogram.</li>
+</ul>
+<div class="hood"><b>In the Cafés</b> Every plot in the studios (pairs plots, trace plots, the PSIS-LOO plot, the dynamics fans) is drawn this way, as SVG text built from scales, with no plotting library.</div>
+</template>
+
+<template id="n6" data-title="A tiny parser and compiler" data-short="Parser">
+<h2>A tiny parser and compiler</h2>
+<p>When you type <code>mu &lt;- a + b * afternoon</code> into a Café, the computer sees a row of characters. It has to work out what they mean before it can calculate anything. That takes four steps, all in this lesson.</p>
+<ol>
+<li><b>Tokenize</b>: group characters into words, numbers and symbols. <code>afternoon</code> is one token, not nine letters.</li>
+<li><b>Parse</b>: arrange the tokens into a tree that respects priority, so <code>b * afternoon</code> is done before the <code>+</code>. The grammar in the comments is the whole rule book; each line of it becomes one small function that calls the others (a "recursive-descent" parser).</li>
+<li><b>Check</b>: every name must be a data column or a parameter, or the program says which one is missing.</li>
+<li><b>Compile</b>: walk the tree once and build a JavaScript function that does the arithmetic. Interpreting walks the tree again for every row; compiling pays that cost once.</li>
+</ol>
+<h3>Try this</h3>
+<ul>
+<li>Write <code>mu &lt;- a + b * afternoon ^ 2</code>, then <code>mu &lt;- (a + b) * afternoon</code>. Compare the trees.</li>
+<li>Misspell a name, or leave out a bracket, and read the error message.</li>
+<li>Add <code>%</code> as a symbol in the tokenizer and see which step complains next.</li>
+</ul>
+<div class="hood"><b>In the Cafés</b> The model parser is this design with a longer grammar: <code>~</code> and distributions, indexes such as <code>a[cid]</code> and <code>alpha[actor, tid]</code>, <code>c( )</code> lists, <code>ddt( )</code> lines. Its compiled functions also carry derivatives, which lesson 7 needs.</div>
+</template>
+
+<template id="n7" data-title="Hamiltonian Monte Carlo by hand" data-short="HMC">
+<h2>Hamiltonian Monte Carlo by hand</h2>
+<p>This is McElreath's chapter 9 example, translated line by line from his R function <code>HMC2</code>. Two parameters, <code>mu_x</code> and <code>mu_y</code>, each with 50 standardized data points and a normal prior.</p>
+<p>Picture the negative log posterior <code>U</code> as a bowl; in the left picture the darkest green is the bottom, where the posterior is highest. HMC places a frictionless puck at the current point, gives it a random flick (momentum <code>p</code>), and lets physics run for <code>L</code> small steps of size <code>step</code>, using the gradient to know which way is downhill. Where the puck stops is the proposal.</p>
+<h3>What to notice</h3>
+<ul>
+<li><b>Leapfrog</b>: half a step of momentum, then alternating full steps of position and momentum, then half a step. It conserves energy almost exactly, which is why most proposals are accepted.</li>
+<li><b>Accept or reject</b>: compare the total energy (potential <code>U</code> plus kinetic <code>K</code>) before and after. If the simulation was accurate the energy barely changes and the proposal is accepted. Rejections are drawn dashed red.</li>
+<li>The gradient is written by hand here, in <code>gradU</code>.</li>
+</ul>
+<h3>Try this</h3>
+<ul>
+<li>Set L to 28: trajectories run past the bottom and curl back toward where they began. That is the U-turn.</li>
+<li>Set step to 0.3: the simulation becomes inaccurate, the energy jumps and proposals are rejected. In Stan this shows up as divergent transitions.</li>
+<li>Set step to 0.005: every proposal is accepted, but the puck barely moves.</li>
+</ul>
+<div class="hood"><b>In the Cafés</b> The studios run the No-U-Turn Sampler, this algorithm with three upgrades: it stops each trajectory when it starts to turn back, so L is chosen for you; warmup tunes the step size and the scale of each parameter; and the gradient comes from automatic differentiation of the compiled model (lesson 6), so nobody writes <code>gradU</code> by hand.</div>
+</template>
+
+<template id="n8" data-title="Recursion" data-short="Recursion">
+<h2>Recursion: a function that calls itself</h2>
+<p>A recursive function solves a problem by handing a smaller copy of the same problem to itself, until the problem is small enough to answer directly. Two parts are always present: the <b>base case</b>, which answers without calling again, and the <b>recursive case</b>, which calls itself on something smaller. Leave out the base case and the calls never stop; the browser gives up with "Maximum call stack size exceeded".</p>
+<h3>Four examples</h3>
+<ol>
+<li><b>Factorial</b>, with every call printed, so you can watch the descent to the base case and the climb back up with the answers.</li>
+<li><b>A revolving credit facility.</b> The schedule up to month t is the schedule up to month t − 1 plus one row, worked out from last month's position by business rules: an extra repayment when more than 80% is used, and draws capped at the limit. Rules that refer to the state they produced are the natural home of recursion.</li>
+<li><b>Walking a tree.</b> A parse tree (lesson 6) is recursive in shape: a node holds smaller nodes. Evaluating, counting and printing it are each a few lines, because each function calls itself on the branches.</li>
+<li><b>Fibonacci</b>, where plain recursion solves the same small problems over and over (more than a million calls for fib(30)), and a memory of earlier answers cuts it to 59 calls.</li>
+</ol>
+<h3>Try this</h3>
+<ul>
+<li>Raise the draw to 300 and watch both rules switch on.</li>
+<li>Add a rule: if the balance falls below 100, the bank waives the interest.</li>
+<li>Remove the base case from <code>factorial</code> and read the error.</li>
+</ul>
+<div class="hood"><b>In the Cafés</b> The model parser is recursive (each grammar rule calls the others), and so are the routines that differentiate a model formula and compile it. The No-U-Turn Sampler builds each trajectory by recursively doubling a binary tree of leapfrog steps.</div>
+</template>
+
+<template id="n9" data-title="Learning XOR" data-short="XOR">
+<h2>Learning XOR</h2>
+<p>XOR gives 1 when exactly one of its two inputs is 1. Plot the four cases on a square and the two 1s sit on one diagonal, the two 0s on the other: no single straight line separates them.</p>
+<h3>Part A: one neuron</h3>
+<p>Rosenblatt's perceptron (1958) adds up weighted inputs and fires if the total is positive. Its learning rule nudges the weights after every mistake. It learns AND and OR in a few passes and never learns XOR. Minsky and Papert proved this in 1969, and interest in neural networks faded for more than a decade.</p>
+<h3>Part B: add a hidden layer</h3>
+<p>With a few hidden units between input and output, each unit can draw its own line, and the output combines them. Learning works by:</p>
+<ul>
+<li><b>Forward pass</b>: compute the hidden units, then the output probability.</li>
+<li><b>Loss</b>: cross-entropy, minus the log of the probability given to the right answer. It is the same quantity as a Bernoulli log likelihood with its sign flipped.</li>
+<li><b>Backpropagation</b>: the chain rule, run from the output back to every weight, to find which way each weight should move.</li>
+<li><b>Gradient descent</b>: move every weight a small step downhill, and repeat.</li>
+</ul>
+<h3>Try this</h3>
+<ul>
+<li>Set hidden units to 1: the network is back to one line and stalls near the coin-flip loss.</li>
+<li>Set hidden units to 2 and try seeds 1 to 10. Some seeds get stuck in a poor solution: the loss surface has more than one valley.</li>
+<li>Set the learning rate to 10, then to 0.05.</li>
+</ul>
+<div class="hood"><b>In the Cafés</b> This is the U(q) and gradU(q) of lesson 7 used for a different purpose. HMC uses the gradient to explore the whole posterior; gradient descent uses it to walk to one lowest point. The chain rule that backpropagation runs by hand here is what the studios' automatic differentiation does for any model you type.</div>
+</template>
+
+<template id="n10" data-title="Self-attention by hand" data-short="Attention">
+<h2>Self-attention by hand</h2>
+<p>This is the computation at the centre of "Attention Is All You Need" (Vaswani and others, Google, 2017), small enough to check with pencil and paper.</p>
+<ol>
+<li>Each word is a row of numbers, its <b>embedding</b>. The matrix X stacks them.</li>
+<li>Three weight matrices turn each word into a <b>query</b> (what it is looking for), a <b>key</b> (what it offers to be found by) and a <b>value</b> (what it passes on): Q = X·W<sub>Q</sub>, K = X·W<sub>K</sub>, V = X·W<sub>V</sub>.</li>
+<li>Every query is compared with every key by a dot product, then divided by √d<sub>k</sub> so that the numbers stay in a sensible range as d<sub>k</sub> grows.</li>
+<li><b>Softmax</b> turns each row of scores into weights that are positive and add to 1.</li>
+<li>Each word's output is the weighted average of the values: words borrow content from the words they attend to.</li>
+</ol>
+<p>The <b>causal mask</b> hides later words by setting their scores to −∞, so softmax gives them weight 0. A model that writes text uses this, because when it chooses the next word, the later words do not yet exist.</p>
+<h3>Try this</h3>
+<ul>
+<li>Double every entry of W<sub>Q</sub>: the attention sharpens toward one word per row.</li>
+<li>Make two rows of X identical and see what happens to their columns of weights.</li>
+<li>Switch the mask on and check that the first word can only attend to itself.</li>
+</ul>
+<div class="hood"><b>In a language model</b> The weight matrices are not set by hand: they are learned exactly as in lesson 9, by gradient descent on the error of predicting the next word, at enormous scale and with many heads and layers stacked. Once training ends the weights are fixed. Writing a reply is a loop: predict one word, append it to the input, and run the whole computation again with the causal mask.</div>
+</template>
+
+<textarea hidden id="c1"><!DOCTYPE html>
+<html>
+<head>
+<title>Hello, café</title>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  #out { margin-top: 12px; padding: 10px; background: #e8f1ee; min-height: 1.5em; }
+</style>
+</head>
+<body>
+
+<h2>Hello, café</h2>
+<p>Type your name, then press the button.</p>
+
+<input id="who" value="Joan">
+<button id="go">Greet me</button>
+<div id="out"></div>
+
+<script>
+// Anything after two slashes is a comment. The computer skips it.
+
+// 1. A variable is a labelled box that holds a value.
+let cups = 2;                    // a number
+const shop = "Café Kalecki";     // text, called a string; const means this box never changes
+let price = 3.25;
+
+// 2. console.log writes into the Console panel: the programmer's notebook.
+console.log("The shop is", shop, "and we ordered", cups, "cups.");
+
+// 3. Arithmetic works as on a calculator: + - * / and ( ).
+console.log("The bill is", cups * price);
+
+// 4. Input and output on the page. First find the elements by their id ...
+const box = document.getElementById("who");
+const out = document.getElementById("out");
+
+// ... then say what should happen when the button is clicked.
+document.getElementById("go").addEventListener("click", function () {
+  const name = box.value;                                      // INPUT: read what was typed
+  const bill = cups * price;
+  out.textContent = "Hello, " + name + "! " + cups + " cups at " + shop + " come to $" + bill + ".";   // OUTPUT
+  console.log("Greeted", name);
+});
+</script>
+
+</body>
+</html>
+</textarea>
+<textarea hidden id="c2"><!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  textarea { width: 100%; height: 140px; font-family: monospace; font-size: 13px; }
+  pre { background: #f2f4f3; padding: 10px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h2>Data in, numbers out</h2>
+<p>The box below is the input: waiting times, in minutes, at five cafés in the morning (afternoon = 0) and the afternoon (afternoon = 1). Change a number and press the button.</p>
+<textarea id="csv">cafe,afternoon,wait
+1,0,3.5
+1,1,2.5
+1,0,4.1
+1,1,2.1
+2,0,2.2
+2,1,0.8
+2,0,2.7
+2,1,1.7
+3,0,5.3
+3,1,3.2
+3,0,4.9
+3,1,3.3
+4,0,2.9
+4,1,2.4
+4,0,2.8
+4,1,2.2
+5,0,4.4
+5,1,3.1
+5,0,4.1
+5,1,3.9&lt;/textarea>
+<button id="read">Read the data</button>
+<pre id="out"></pre>
+
+<script>
+// OUTPUT helper: add one line of text to the page.
+function show(line) {
+  document.getElementById("out").textContent += line + "\n";
+}
+
+// INPUT: turn comma-separated text into columns of numbers.
+function readCSV(text) {
+  const lines = text.trim().split("\n");     // one string per line
+  const names = lines[0].split(",");          // the header: cafe, afternoon, wait
+  const cols = {};                            // an object: a set of named boxes
+  for (const n of names) cols[n] = [];        // one empty list (an array) per column
+  for (let i = 1; i < lines.length; i++) {    // every line after the header
+    const cells = lines[i].split(",");
+    for (let j = 0; j < names.length; j++) {
+      cols[names[j]].push(Number(cells[j]));  // the text "4.1" becomes the number 4.1
+    }
+  }
+  return cols;
+}
+
+document.getElementById("read").addEventListener("click", function () {
+  document.getElementById("out").textContent = "";       // clear old output
+  const d = readCSV(document.getElementById("csv").value);
+
+  show("Columns: " + Object.keys(d).join(", "));
+  show("Rows:    " + d.wait.length);
+  show("wait:    " + JSON.stringify(d.wait));            // the raw array
+  show("");
+
+  // add up the waits with a loop
+  let total = 0;
+  for (const w of d.wait) total = total + w;
+  show("Total minutes, raw:   " + total);                 // computers store decimals in binary ...
+  show("Total, 1 decimal:     " + total.toFixed(1));      // ... so we format for people
+  show(`Average wait:         ${(total / d.wait.length).toFixed(2)} minutes`);   // a template string
+  show("0.1 + 0.2 =           " + (0.1 + 0.2));           // the same binary effect
+  show("");
+
+  // a small aligned listing: padStart pads text on the left to a fixed width
+  show("row  cafe  afternoon  wait");
+  for (let i = 0; i < 6; i++) {
+    show(String(i + 1).padStart(3) + String(d.cafe[i]).padStart(6) +
+         String(d.afternoon[i]).padStart(11) + d.wait[i].toFixed(1).padStart(6));
+  }
+  console.log("All the columns:", d);                     // the Console shows the whole object
+});
+
+document.getElementById("read").click();                  // run once when the page opens
+</script>
+
+</body>
+</html>
+</textarea>
+<textarea hidden id="c3"><!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  pre { background: #f2f4f3; padding: 10px; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h2>Decisions, loops and functions</h2>
+<p>Seed: <input id="seed" value="42" size="6"> Visits to simulate: <input id="n" value="1000" size="6">
+<button id="run">Simulate</button></p>
+<pre id="out"></pre>
+
+<script>
+function show(line) { document.getElementById("out").textContent += line + "\n"; }
+
+// A FUNCTION is a recipe with a name. It takes inputs and returns an output.
+function mean(xs) {
+  let s = 0;
+  for (const x of xs) s += x;          // s += x means s = s + x
+  return s / xs.length;
+}
+function sd(xs) {
+  const m = mean(xs);
+  let s = 0;
+  for (const x of xs) s += (x - m) * (x - m);
+  return Math.sqrt(s / (xs.length - 1));
+}
+// a quantile: sort a copy, then read off the value a share p of the way along
+function quantile(xs, p) {
+  const s = xs.slice().sort(function (a, b) { return a - b; });
+  return s[Math.floor(p * (s.length - 1))];
+}
+
+// Random numbers with a SEED: the same seed gives the same numbers, like set.seed() in R.
+// mulberry32 is a small, well-known generator: you do not need to follow the bit tricks.
+function makeRunif(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;   // a number between 0 and 1
+  };
+}
+
+document.getElementById("run").addEventListener("click", function () {
+  document.getElementById("out").textContent = "";
+  const runif = makeRunif(Number(document.getElementById("seed").value));
+  const n = Number(document.getElementById("n").value);
+
+  // normal draws from uniform ones (the Box–Muller recipe), like rnorm() in R
+  function rnorm(mu, sigma) {
+    const u = 1 - runif(), v = runif();
+    return mu + sigma * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  // LOOP: simulate n visits. DECISION: morning or afternoon, chosen at random.
+  const waits = [];
+  let afternoons = 0;
+  for (let i = 0; i < n; i++) {
+    let w;
+    if (runif() < 0.5) {               // if ... else: one branch or the other
+      w = rnorm(3.5, 1);               // mornings: 3.5 minutes on average
+    } else {
+      w = rnorm(2.5, 1);               // afternoons: a minute quicker
+      afternoons++;                    // count them (++ adds one)
+    }
+    if (w < 0) w = 0;                  // nobody waits a negative time
+    waits.push(w);
+  }
+
+  show("Visits:            " + n + "   (afternoons: " + afternoons + ")");
+  show("Mean wait:         " + mean(waits).toFixed(2));
+  show("Standard deviation " + sd(waits).toFixed(2));
+  show("5.5% and 94.5%:    " + quantile(waits, 0.055).toFixed(2) + " and " + quantile(waits, 0.945).toFixed(2));
+
+  // count with a condition
+  let long = 0;
+  for (const w of waits) if (w > 5) long++;
+  show("Share over 5 min:  " + (100 * long / n).toFixed(1) + "%");
+
+  // WHILE loop: keep going until something happens
+  let k = 0;
+  while (k < waits.length &amp;&amp; waits[k] <= 6) k++;
+  show(k < waits.length ? "First wait over 6 minutes: visit " + (k + 1) : "No wait over 6 minutes");
+
+  console.log("First ten waits:", waits.slice(0, 10).map(function (w) { return Number(w.toFixed(2)); }));
+});
+
+document.getElementById("run").click();
+</script>
+
+</body>
+</html>
+</textarea>
+<textarea hidden id="c4"><!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  table { border-collapse: collapse; font-size: 14px; margin: 10px 0 20px; }
+  th, td { padding: 4px 12px; border-bottom: 1px solid #ccc; }
+  th { text-align: left; background: #eef2f0; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.hist { font-family: monospace; letter-spacing: -1px; color: #0e6b5b; }
+</style>
+</head>
+<body>
+
+<h2>Tables: a home-made precis</h2>
+<p>The data again, then a summary table built from scratch, in the style of McElreath's <code>precis()</code>.</p>
+<textarea id="csv" hidden>cafe,afternoon,wait
+1,0,3.5
+1,1,2.5
+1,0,4.1
+1,1,2.1
+2,0,2.2
+2,1,0.8
+2,0,2.7
+2,1,1.7
+3,0,5.3
+3,1,3.2
+3,0,4.9
+3,1,3.3
+4,0,2.9
+4,1,2.4
+4,0,2.8
+4,1,2.2
+5,0,4.4
+5,1,3.1
+5,0,4.1
+5,1,3.9&lt;/textarea>
+<div id="raw"></div>
+<div id="summary"></div>
+
+<script>
+function readCSV(text) {
+  const lines = text.trim().split("\n"), names = lines[0].split(","), cols = {};
+  for (const n of names) cols[n] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(",");
+    for (let j = 0; j < names.length; j++) cols[names[j]].push(Number(cells[j]));
+  }
+  return cols;
+}
+function mean(xs) { let s = 0; for (const x of xs) s += x; return s / xs.length; }
+function sd(xs) { const m = mean(xs); let s = 0; for (const x of xs) s += (x - m) ** 2; return Math.sqrt(s / (xs.length - 1)); }
+function quantile(xs, p) { const s = xs.slice().sort(function (a, b) { return a - b; }); return s[Math.floor(p * (s.length - 1))]; }
+
+// A text histogram, as precis() prints: count values in 8 bins, draw each count as a block of a height.
+function sparkHist(xs) {
+  const blocks = "▁▂▃▄▅▆▇█", lo = Math.min(...xs), hi = Math.max(...xs), bins = new Array(8).fill(0);
+  for (const x of xs) bins[Math.min(7, Math.floor(8 * (x - lo) / (hi - lo || 1)))]++;
+  const top = Math.max(...bins);
+  return bins.map(function (b) { return blocks[Math.round(7 * b / top)]; }).join("");
+}
+
+// TABLE 1: the raw rows. HTML tables are rows (tr) of cells (th for headers, td for data).
+const d = readCSV(document.getElementById("csv").value);
+let html = "<table><tr><th>row</th><th>cafe</th><th>afternoon</th><th>wait</th></tr>";
+for (let i = 0; i < 8; i++) {
+  html += "<tr><td class='num'>" + (i + 1) + "</td><td class='num'>" + d.cafe[i] + "</td><td class='num'>" +
+          d.afternoon[i] + "</td><td class='num'>" + d.wait[i].toFixed(1) + "</td></tr>";
+}
+html += "<tr><td colspan='4'>… " + (d.wait.length - 8) + " more rows</td></tr></table>";
+document.getElementById("raw").innerHTML = html;
+
+// TABLE 2: a precis of several columns. Each entry of 'columns' is a name and a list of numbers.
+function precis(columns) {
+  let h = "<table><tr><th></th><th>mean</th><th>sd</th><th>5.5%</th><th>94.5%</th><th>histogram</th></tr>";
+  for (const name in columns) {
+    const xs = columns[name];
+    h += "<tr><th>" + name + "</th>" +
+      "<td class='num'>" + mean(xs).toFixed(2) + "</td>" +
+      "<td class='num'>" + sd(xs).toFixed(2) + "</td>" +
+      "<td class='num'>" + quantile(xs, 0.055).toFixed(2) + "</td>" +
+      "<td class='num'>" + quantile(xs, 0.945).toFixed(2) + "</td>" +
+      "<td class='hist'>" + sparkHist(xs) + "</td></tr>";
+  }
+  return h + "</table>";
+}
+
+// split the waits by time of day with filter: keep the rows where a condition holds
+const morning = d.wait.filter(function (w, i) { return d.afternoon[i] === 0; });
+const afternoon = d.wait.filter(function (w, i) { return d.afternoon[i] === 1; });
+document.getElementById("summary").innerHTML =
+  "<h3>Waiting times</h3>" + precis({ "all visits": d.wait, "mornings": morning, "afternoons": afternoon });
+
+// console.table prints a table in the Console too
+const rows = [];
+for (let c = 1; c <= 5; c++) {
+  const mine = d.wait.filter(function (w, i) { return d.cafe[i] === c; });
+  rows.push({ cafe: c, visits: mine.length, mean: Number(mean(mine).toFixed(2)) });
+}
+console.table(rows);
+</script>
+
+</body>
+</html>
+</textarea>
+<textarea hidden id="c5"><!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  svg { background: #fbfcfb; border: 1px solid #dde3e0; }
+  text { font-size: 11px; fill: #333; }
+</style>
+</head>
+<body>
+
+<h2>Pictures from numbers</h2>
+<p>Two plots drawn by hand with SVG, the drawing language of web pages. No library: just scales and shapes.</p>
+<textarea id="csv" hidden>cafe,afternoon,wait
+1,0,3.5
+1,1,2.5
+1,0,4.1
+1,1,2.1
+2,0,2.2
+2,1,0.8
+2,0,2.7
+2,1,1.7
+3,0,5.3
+3,1,3.2
+3,0,4.9
+3,1,3.3
+4,0,2.9
+4,1,2.4
+4,0,2.8
+4,1,2.2
+5,0,4.4
+5,1,3.1
+5,0,4.1
+5,1,3.9&lt;/textarea>
+<div id="plot1"></div>
+<div id="plot2"></div>
+
+<script>
+function readCSV(text) {
+  const lines = text.trim().split("\n"), names = lines[0].split(","), cols = {};
+  for (const n of names) cols[n] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(",");
+    for (let j = 0; j < names.length; j++) cols[names[j]].push(Number(cells[j]));
+  }
+  return cols;
+}
+const d = readCSV(document.getElementById("csv").value);
+
+// A SCALE turns a data value into a pixel position: a straight-line map from [d0, d1] to [r0, r1].
+// d3.scaleLinear() does exactly this, with more options.
+function scale(d0, d1, r0, r1) {
+  return function (v) { return r0 + (v - d0) * (r1 - r0) / (d1 - d0); };
+}
+
+// PLOT 1: wait against café, mornings and afternoons side by side.
+const W = 520, H = 300, m = { left: 50, right: 20, top: 20, bottom: 45 };
+const x = scale(0.5, 5.5, m.left, W - m.right);   // café 1 to 5 across
+const y = scale(0, 6, H - m.bottom, m.top);       // 0 to 6 minutes up (pixels count downward!)
+let s = "";
+// axes: two lines, then tick marks with labels
+s += "<line x1='" + m.left + "' y1='" + y(0) + "' x2='" + (W - m.right) + "' y2='" + y(0) + "' stroke='#666'/>";
+s += "<line x1='" + m.left + "' y1='" + y(0) + "' x2='" + m.left + "' y2='" + y(6) + "' stroke='#666'/>";
+for (let t = 0; t <= 6; t++) {
+  s += "<line x1='" + (m.left - 4) + "' x2='" + m.left + "' y1='" + y(t) + "' y2='" + y(t) + "' stroke='#666'/>";
+  s += "<text x='" + (m.left - 8) + "' y='" + (y(t) + 4) + "' text-anchor='end'>" + t + "</text>";
+}
+for (let c = 1; c <= 5; c++) s += "<text x='" + x(c) + "' y='" + (H - m.bottom + 16) + "' text-anchor='middle'>café " + c + "</text>";
+s += "<text x='14' y='" + (m.top + 90) + "' transform='rotate(-90 14 " + (m.top + 90) + ")'>wait (minutes)</text>";
+// points: mornings filled, afternoons open, nudged left and right
+for (let i = 0; i < d.wait.length; i++) {
+  const nudge = d.afternoon[i] === 1 ? 12 : -12;
+  s += "<circle cx='" + (x(d.cafe[i]) + nudge) + "' cy='" + y(d.wait[i]) + "' r='5' " +
+       (d.afternoon[i] === 1 ? "fill='white' stroke='#0e6b5b' stroke-width='2'" : "fill='#0e6b5b'") + "/>";
+}
+s += "<text x='" + (W - 170) + "' y='" + (m.top + 4) + "'>● morning   ○ afternoon</text>";
+document.getElementById("plot1").innerHTML = "<svg width='" + W + "' height='" + H + "'>" + s + "</svg>";
+
+// PLOT 2: a histogram of 2,000 simulated waits, with the mean as a vertical line.
+let seed = 7;
+function runif() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }   // a very old generator, fine for pictures
+function rnorm(mu, sd) { return mu + sd * Math.sqrt(-2 * Math.log(1 - runif())) * Math.cos(2 * Math.PI * runif()); }
+const sims = [];
+for (let i = 0; i < 2000; i++) sims.push(rnorm(3.2, 1.1));
+
+const nb = 24, lo = -1, hi = 7.4, counts = new Array(nb).fill(0);
+for (const v of sims) { const b = Math.floor(nb * (v - lo) / (hi - lo)); if (b >= 0 &amp;&amp; b < nb) counts[b]++; }
+const x2 = scale(lo, hi, m.left, W - m.right), y2 = scale(0, Math.max(...counts), H - m.bottom, m.top);
+let s2 = "";
+for (let b = 0; b < nb; b++) {
+  const left = x2(lo + b * (hi - lo) / nb), right = x2(lo + (b + 1) * (hi - lo) / nb);
+  s2 += "<rect x='" + (left + 1) + "' y='" + y2(counts[b]) + "' width='" + (right - left - 2) + "' height='" + (y2(0) - y2(counts[b])) + "' fill='#7fb5a8'/>";
+}
+const avg = sims.reduce(function (a, b) { return a + b; }, 0) / sims.length;
+s2 += "<line x1='" + x2(avg) + "' x2='" + x2(avg) + "' y1='" + m.top + "' y2='" + y2(0) + "' stroke='#b45309' stroke-width='2'/>";
+s2 += "<text x='" + (x2(avg) + 6) + "' y='" + (m.top + 12) + "'>mean " + avg.toFixed(2) + "</text>";
+for (let t = 0; t <= 7; t++) s2 += "<text x='" + x2(t) + "' y='" + (H - m.bottom + 16) + "' text-anchor='middle'>" + t + "</text>";
+s2 += "<line x1='" + m.left + "' x2='" + (W - m.right) + "' y1='" + y2(0) + "' y2='" + y2(0) + "' stroke='#666'/>";
+s2 += "<text x='" + (W / 2) + "' y='" + (H - 8) + "' text-anchor='middle'>simulated wait (minutes)</text>";
+document.getElementById("plot2").innerHTML = "<svg width='" + W + "' height='" + H + "'>" + s2 + "</svg>";
+
+console.log("Bin counts:", counts);
+</script>
+
+</body>
+</html>
+</textarea>
+<textarea hidden id="c6"><!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  input { font-family: monospace; font-size: 14px; }
+  pre { background: #f2f4f3; padding: 10px; font-size: 13px; }
+  .err { color: #b00020; }
+  table { border-collapse: collapse; font-size: 13px; }
+  td, th { padding: 3px 10px; border-bottom: 1px solid #ddd; text-align: right; }
+</style>
+</head>
+<body>
+
+<h2>A tiny parser and compiler</h2>
+<p>Model line: <input id="src" size="34" value="mu <- a + b * afternoon"></p>
+<p>Parameters: a = <input id="a" value="3.8" size="5"> b = <input id="b" value="-1.2" size="5">
+<button id="go">Parse, compile, run</button></p>
+<textarea id="csv" hidden>cafe,afternoon,wait
+1,0,3.5
+1,1,2.5
+1,0,4.1
+1,1,2.1
+2,0,2.2
+2,1,0.8
+2,0,2.7
+2,1,1.7
+3,0,5.3
+3,1,3.2
+3,0,4.9
+3,1,3.3
+4,0,2.9
+4,1,2.4
+4,0,2.8
+4,1,2.2
+5,0,4.4
+5,1,3.1
+5,0,4.1
+5,1,3.9&lt;/textarea>
+<div id="out"></div>
+
+<script>
+// ---------- 1. TOKENIZER: chop the text into words, numbers and symbols ----------
+function tokenize(src) {
+  const tokens = [];
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === " ") { i++; continue; }                                  // skip spaces
+    if (src.startsWith("<-", i)) { tokens.push({ type: "assign", text: "<-" }); i += 2; continue; }
+    if ("0123456789.".includes(c)) {                                   // a number: digits and a dot
+      let j = i; while (j < src.length &amp;&amp; "0123456789.".includes(src[j])) j++;
+      tokens.push({ type: "number", text: src.slice(i, j) }); i = j; continue;
+    }
+    if (/[A-Za-z_]/.test(c)) {                                         // a name: letters, digits, _
+      let j = i; while (j < src.length &amp;&amp; /[A-Za-z0-9_]/.test(src[j])) j++;
+      tokens.push({ type: "name", text: src.slice(i, j) }); i = j; continue;
+    }
+    if ("+-*/^()".includes(c)) { tokens.push({ type: "symbol", text: c }); i++; continue; }
+    throw new Error("I don't understand '" + c + "' at position " + (i + 1));
+  }
+  return tokens;
+}
+
+// ---------- 2. PARSER: arrange the tokens into a tree, following a grammar ----------
+//   line    :=  name  "<-"  sum
+//   sum     :=  product  ( ("+" | "-")  product )*      lowest priority
+//   product :=  power    ( ("*" | "/")  power )*
+//   power   :=  atom     ( "^"  power )?                 highest priority
+//   atom    :=  number | name | "(" sum ")" | "-" atom
+function parse(tokens) {
+  let k = 0;
+  const peek = function () { return tokens[k] ? tokens[k].text : null; };
+  function expect(text) {
+    if (peek() !== text) throw new Error("Expected '" + text + "' but found " + (peek() === null ? "the end of the line" : "'" + peek() + "'"));
+    k++;
+  }
+  function atom() {
+    const t = tokens[k];
+    if (!t) throw new Error("The line ends too soon");
+    if (t.type === "number") { k++; return { kind: "number", value: Number(t.text) }; }
+    if (t.type === "name") { k++; return { kind: "name", name: t.text }; }
+    if (t.text === "(") { k++; const inside = sum(); expect(")"); return inside; }
+    if (t.text === "-") { k++; return { kind: "negate", arg: atom() }; }
+    throw new Error("Unexpected '" + t.text + "'");
+  }
+  function power() {
+    const base = atom();
+    if (peek() === "^") { k++; return { kind: "^", left: base, right: power() }; }
+    return base;
+  }
+  function product() {
+    let node = power();
+    while (peek() === "*" || peek() === "/") { const op = tokens[k++].text; node = { kind: op, left: node, right: power() }; }
+    return node;
+  }
+  function sum() {
+    let node = product();
+    while (peek() === "+" || peek() === "-") { const op = tokens[k++].text; node = { kind: op, left: node, right: product() }; }
+    return node;
+  }
+  const target = tokens[k];
+  if (!target || target.type !== "name") throw new Error("A model line starts with a name, as in mu <- ...");
+  k++; expect("<-");
+  const rhs = sum();
+  if (k < tokens.length) throw new Error("Unexpected '" + peek() + "' after the end of the formula");
+  return { kind: "define", name: target.text, rhs: rhs };
+}
+
+// draw the tree as indented text
+function treeText(node, indent) {
+  indent = indent || "";
+  if (node.kind === "number") return indent + node.value + "\n";
+  if (node.kind === "name") return indent + node.name + "\n";
+  if (node.kind === "negate") return indent + "negate\n" + treeText(node.arg, indent + "   ");
+  if (node.kind === "define") return indent + node.name + " <-\n" + treeText(node.rhs, indent + "   ");
+  return indent + node.kind + "\n" + treeText(node.left, indent + "   ") + treeText(node.right, indent + "   ");
+}
+
+// ---------- 3. CHECK: every name must be a data column or a parameter ----------
+function checkNames(node, known) {
+  if (node.kind === "name" &amp;&amp; !(node.name in known)) throw new Error("'" + node.name + "' is neither a data column nor a parameter");
+  for (const part of [node.left, node.right, node.arg, node.rhs]) if (part) checkNames(part, known);
+}
+
+// ---------- 4a. INTERPRET: walk the tree for every row ----------
+function evaluate(node, env) {
+  switch (node.kind) {
+    case "number": return node.value;
+    case "name":   return env[node.name];
+    case "negate": return -evaluate(node.arg, env);
+    case "+": return evaluate(node.left, env) + evaluate(node.right, env);
+    case "-": return evaluate(node.left, env) - evaluate(node.right, env);
+    case "*": return evaluate(node.left, env) * evaluate(node.right, env);
+    case "/": return evaluate(node.left, env) / evaluate(node.right, env);
+    case "^": return Math.pow(evaluate(node.left, env), evaluate(node.right, env));
+  }
+}
+
+// ---------- 4b. COMPILE: walk the tree once, and build a JavaScript function ----------
+function compile(node) {
+  switch (node.kind) {
+    case "number": { const v = node.value; return function () { return v; }; }
+    case "name":   { const n = node.name;  return function (env) { return env[n]; }; }
+    case "negate": { const f = compile(node.arg); return function (env) { return -f(env); }; }
+  }
+  const L = compile(node.left), R = compile(node.right);
+  switch (node.kind) {
+    case "+": return function (env) { return L(env) + R(env); };
+    case "-": return function (env) { return L(env) - R(env); };
+    case "*": return function (env) { return L(env) * R(env); };
+    case "/": return function (env) { return L(env) / R(env); };
+    case "^": return function (env) { return Math.pow(L(env), R(env)); };
+  }
+}
+
+function readCSV(text) {
+  const lines = text.trim().split("\n"), names = lines[0].split(","), rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(","), row = {};
+    for (let j = 0; j < names.length; j++) row[names[j]] = Number(cells[j]);
+    rows.push(row);
+  }
+  return rows;
+}
+
+function run() {
+  const out = document.getElementById("out");
+  try {
+    const src = document.getElementById("src").value;
+    const tokens = tokenize(src);
+    const tree = parse(tokens);
+    const rows = readCSV(document.getElementById("csv").value);
+    const params = { a: Number(document.getElementById("a").value), b: Number(document.getElementById("b").value) };
+    checkNames(tree.rhs, Object.assign({}, rows[0], params));
+
+    const f = compile(tree.rhs);
+    let h = "<h3>1. Tokens</h3><pre>" + tokens.map(function (t) { return t.type + " " + t.text; }).join("\n") + "</pre>";
+    h += "<h3>2. Tree</h3><pre>" + treeText(tree) + "</pre>";
+    h += "<h3>3. Run on the data</h3><table><tr><th>row</th><th>afternoon</th><th>wait</th><th>" + tree.name + "</th><th>wait − " + tree.name + "</th></tr>";
+    rows.slice(0, 8).forEach(function (r, i) {
+      const env = Object.assign({}, r, params), v = f(env);
+      h += "<tr><td>" + (i + 1) + "</td><td>" + r.afternoon + "</td><td>" + r.wait.toFixed(1) + "</td><td>" + v.toFixed(2) + "</td><td>" + (r.wait - v).toFixed(2) + "</td></tr>";
+    });
+    h += "</table>";
+
+    // why compile? time a million evaluations each way
+    const env = Object.assign({}, rows[0], params);
+    let t0 = performance.now(), s = 0;
+    for (let i = 0; i < 1e6; i++) s += evaluate(tree.rhs, env);
+    const tInterp = performance.now() - t0;
+    t0 = performance.now(); s = 0;
+    for (let i = 0; i < 1e6; i++) s += f(env);
+    const tComp = performance.now() - t0;
+    h += "<h3>4. Interpret or compile?</h3><pre>A million evaluations, walking the tree each time: " + tInterp.toFixed(0) + " ms\n" +
+         "A million evaluations of the compiled function:       " + tComp.toFixed(0) + " ms</pre>";
+    out.innerHTML = h;
+    console.log("The tree as data:", tree);
+  } catch (e) {
+    out.innerHTML = "<p class='err'>" + e.message + "</p>";
+  }
+}
+document.getElementById("go").addEventListener("click", run);
+run();
+</script>
+
+</body>
+</html>
+</textarea>
+<textarea hidden id="c7"><!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  input { width: 4.5em; }
+  svg { background: #fff; border: 1px solid #dde3e0; }
+  text { font-size: 11px; fill: #333; }
+  table { border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  td, th { padding: 3px 10px; border-bottom: 1px solid #ddd; text-align: right; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+</style>
+</head>
+<body>
+
+<h2>Hamiltonian Monte Carlo by hand</h2>
+<p>step <input id="step" value="0.03"> L <input id="L" value="11"> trajectories to draw <input id="nshow" value="4">
+samples <input id="n" value="1000"> seed <input id="seed" value="7"> <button id="go">Run HMC</button></p>
+<div class="row"><div id="traj"></div><div id="samples"></div></div>
+<div id="summary"></div>
+
+<script>
+// ---- random numbers with a seed (see lesson 3) ----
+function makeRunif(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+let runif = makeRunif(7);
+function rnorm() { return Math.sqrt(-2 * Math.log(1 - runif())) * Math.cos(2 * Math.PI * runif()); }
+function standardize(v) {
+  const m = v.reduce(function (a, b) { return a + b; }, 0) / v.length;
+  const s = Math.sqrt(v.reduce(function (a, b) { return a + (b - m) * (b - m); }, 0) / (v.length - 1));
+  return v.map(function (z) { return (z - m) / s; });
+}
+
+// ---- the data: 50 values of x and of y, standardized (McElreath R code 9.3) ----
+let x = [], y = [];
+function makeData(seed) {
+  runif = makeRunif(seed);
+  y = standardize(Array.from({ length: 50 }, rnorm));
+  x = standardize(Array.from({ length: 50 }, rnorm));
+}
+
+// ---- U: the NEGATIVE log posterior of q = (mu_y, mu_x), the "height" of the surface (R code 9.4) ----
+// model: y ~ normal(mu_y, 1), x ~ normal(mu_x, 1), mu_y ~ normal(0, 1), mu_x ~ normal(0, 1)
+function dnormLog(v, mu, sd) { return -0.5 * Math.log(2 * Math.PI) - Math.log(sd) - 0.5 * ((v - mu) / sd) ** 2; }
+function U(q) {
+  const muy = q[0], mux = q[1];
+  let lp = dnormLog(muy, 0, 1) + dnormLog(mux, 0, 1);
+  for (let i = 0; i < y.length; i++) lp += dnormLog(y[i], muy, 1) + dnormLog(x[i], mux, 1);
+  return -lp;
+}
+// ---- its gradient: which way is downhill (R code 9.5). Written by hand here; the Cafés compute it automatically. ----
+function gradU(q) {
+  const muy = q[0], mux = q[1];
+  let g1 = -muy, g2 = -mux;                         // from the priors: (0 - mu) / 1^2
+  for (let i = 0; i < y.length; i++) { g1 += y[i] - muy; g2 += x[i] - mux; }
+  return [-g1, -g2];
+}
+
+// ---- HMC2: one proposal (R code 9.8, translated line by line) ----
+function HMC2(U, gradU, epsilon, L, current_q) {
+  let q = current_q.slice();
+  let p = q.map(rnorm);                             // a random flick: momentum p
+  const current_p = p.slice();
+  const traj = [q.slice()];
+  // leapfrog: half a step of momentum, then L full steps of position and momentum, then half a step
+  let g = gradU(q);
+  p = p.map(function (pi, i) { return pi - epsilon * g[i] / 2; });
+  for (let i = 1; i <= L; i++) {
+    q = q.map(function (qi, j) { return qi + epsilon * p[j]; });
+    traj.push(q.slice());
+    if (i !== L) { g = gradU(q); p = p.map(function (pi, j) { return pi - epsilon * g[j]; }); }
+  }
+  g = gradU(q);
+  p = p.map(function (pi, i) { return -(pi - epsilon * g[i] / 2); });   // final half step, and flip p
+  // energy = potential U + kinetic K. Accept with probability exp(current H - proposed H).
+  const K = function (pp) { return pp.reduce(function (a, b) { return a + b * b; }, 0) / 2; };
+  const H0 = U(current_q) + K(current_p), H1 = U(q) + K(p);
+  const accept = runif() < Math.exp(H0 - H1);
+  return { q: accept ? q : current_q, traj: traj, accept: accept, dH: H1 - H0 };
+}
+
+function run() {
+  const step = Number(document.getElementById("step").value), L = Math.round(Number(document.getElementById("L").value));
+  const nshow = Math.round(Number(document.getElementById("nshow").value)), n = Math.round(Number(document.getElementById("n").value));
+  makeData(Number(document.getElementById("seed").value));
+
+  // run the chain from McElreath's starting point
+  let q = [-0.1, 0.2];
+  const draws = [], trajs = [];
+  let accepted = 0;
+  for (let i = 0; i < n; i++) {
+    const r = HMC2(U, gradU, step, L, q);
+    if (i < nshow) trajs.push({ from: q, traj: r.traj, accept: r.accept, dH: r.dH });
+    q = r.q;
+    if (r.accept) accepted++;
+    draws.push(q.slice());
+  }
+
+  // ---- picture 1: the surface (darker = higher posterior) and the trajectories ----
+  const W = 380, H = 380, pr = 0.4, m = 34;
+  const sx = function (v) { return m + (v + pr) * (W - 2 * m) / (2 * pr); };
+  const sy = function (v) { return H - m - (v + pr) * (H - 2 * m) / (2 * pr); };
+  let s = "", Umin = Infinity;
+  const G = 36, cell = 2 * pr / G, us = [];
+  for (let a = 0; a < G; a++) for (let b = 0; b < G; b++) { const u = U([-pr + (b + 0.5) * cell, -pr + (a + 0.5) * cell]); us.push(u); Umin = Math.min(Umin, u); }
+  for (let a = 0; a < G; a++) for (let b = 0; b < G; b++) {
+    const dens = Math.exp(Umin - us[a * G + b]);         // relative posterior density
+    const x0 = Math.round(sx(-pr + a * cell)), x1 = Math.round(sx(-pr + (a + 1) * cell));
+    const y0 = Math.round(sy(-pr + (b + 1) * cell)), y1 = Math.round(sy(-pr + b * cell));
+    s += "<rect x='" + x0 + "' y='" + y0 + "' width='" + (x1 - x0) + "' height='" + (y1 - y0) +
+         "' fill='rgb(14,107,91)' fill-opacity='" + (0.55 * dens).toFixed(3) + "' shape-rendering='crispEdges'/>";
+  }
+  trajs.forEach(function (t, k) {
+    const pts = t.traj.map(function (qq) { return sx(qq[1]).toFixed(1) + "," + sy(qq[0]).toFixed(1); }).join(" ");
+    s += "<polyline points='" + pts + "' fill='none' stroke='" + (t.accept ? "#1d4ed8" : "#b00020") + "' stroke-width='1.5' stroke-dasharray='" + (t.accept ? "" : "4 3") + "'/>";
+    t.traj.forEach(function (qq) { s += "<circle cx='" + sx(qq[1]).toFixed(1) + "' cy='" + sy(qq[0]).toFixed(1) + "' r='1.8' fill='#1d4ed8'/>"; });
+    const end = t.traj[t.traj.length - 1];
+    s += "<circle cx='" + sx(end[1]) + "' cy='" + sy(end[0]) + "' r='5' fill='" + (t.accept ? "#1d4ed8" : "white") + "' stroke='#1d4ed8' stroke-width='1.5'/>";
+    s += "<text x='" + (sx(end[1]) + 7) + "' y='" + (sy(end[0]) - 6) + "'>" + (k + 1) + "</text>";
+  });
+  s += "<circle cx='" + sx(0.2) + "' cy='" + sy(-0.1) + "' r='4' fill='#b45309'/><text x='" + (sx(0.2) + 7) + "' y='" + (sy(-0.1) + 4) + "'>start</text>";
+  for (const t of [-0.4, -0.2, 0, 0.2, 0.4]) {
+    s += "<text x='" + sx(t) + "' y='" + (H - m + 14) + "' text-anchor='middle'>" + t + "</text><text x='" + (m - 5) + "' y='" + (sy(t) + 4) + "' text-anchor='end'>" + t + "</text>";
+  }
+  s += "<text x='" + (W / 2) + "' y='" + (H - 4) + "' text-anchor='middle'>mu_x</text><text x='10' y='" + (H / 2) + "' transform='rotate(-90 10 " + (H / 2) + ")'>mu_y</text>";
+  document.getElementById("traj").innerHTML = "<svg width='" + W + "' height='" + H + "'>" + s + "</svg>";
+
+  // ---- picture 2: all the samples ----
+  let s2 = "";
+  draws.forEach(function (d) { s2 += "<circle cx='" + sx(d[1]).toFixed(1) + "' cy='" + sy(d[0]).toFixed(1) + "' r='1.6' fill='#0e6b5b' fill-opacity='.35'/>"; });
+  for (const t of [-0.4, -0.2, 0, 0.2, 0.4]) s2 += "<text x='" + sx(t) + "' y='" + (H - m + 14) + "' text-anchor='middle'>" + t + "</text>";
+  s2 += "<text x='" + (W / 2) + "' y='" + (H - 4) + "' text-anchor='middle'>" + n + " samples of (mu_x, mu_y)</text>";
+  document.getElementById("samples").innerHTML = "<svg width='" + W + "' height='" + H + "'>" + s2 + "</svg>";
+
+  // ---- the summary table ----
+  const col = function (j) { return draws.map(function (d) { return d[j]; }); };
+  const mean = function (v) { return v.reduce(function (a, b) { return a + b; }, 0) / v.length; };
+  const sd = function (v) { const mm = mean(v); return Math.sqrt(v.reduce(function (a, b) { return a + (b - mm) ** 2; }, 0) / (v.length - 1)); };
+  const qt = function (v, p) { const so = v.slice().sort(function (a, b) { return a - b; }); return so[Math.floor(p * (so.length - 1))]; };
+  let h = "<table><tr><th></th><th>mean</th><th>sd</th><th>5.5%</th><th>94.5%</th></tr>";
+  [["mu_x", col(1)], ["mu_y", col(0)]].forEach(function (r) {
+    h += "<tr><th>" + r[0] + "</th><td>" + mean(r[1]).toFixed(3) + "</td><td>" + sd(r[1]).toFixed(3) + "</td><td>" + qt(r[1], 0.055).toFixed(3) + "</td><td>" + qt(r[1], 0.945).toFixed(3) + "</td></tr>";
+  });
+  h += "</table><p>Accepted " + accepted + " of " + n + " proposals (" + (100 * accepted / n).toFixed(1) + "%). Each proposal took " + L + " leapfrog steps, so " + (n * L) + " gradient evaluations in all.</p>";
+  document.getElementById("summary").innerHTML = h;
+  trajs.forEach(function (t, k) { console.log("trajectory " + (k + 1) + ": energy change " + t.dH.toFixed(4) + (t.accept ? ", accepted" : ", rejected")); });
+}
+
+document.getElementById("go").addEventListener("click", run);
+run();
+</script>
+
+</body>
+</html>
+</textarea>
+<textarea hidden id="c8"><!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  pre { background: #f2f4f3; padding: 10px; font-size: 13px; }
+  table { border-collapse: collapse; font-size: 13px; }
+  td, th { padding: 3px 10px; border-bottom: 1px solid #ddd; text-align: right; }
+</style>
+</head>
+<body>
+
+<h2>Recursion: a function that calls itself</h2>
+<h3>1. Factorial, with every call shown</h3>
+<pre id="out1"></pre>
+<h3>2. A revolving credit facility, month by month</h3>
+<p>Limit <input id="limit" value="1000" size="6"> monthly rate <input id="rate" value="0.01" size="5">
+draw per month <input id="draw" value="150" size="5"> repay per month <input id="repay" value="60" size="5">
+<button id="go">Recompute</button></p>
+<div id="out2"></div>
+<h3>3. Walking a tree</h3>
+<pre id="out3"></pre>
+<h3>4. Recursion that repeats itself, and memory that stops it</h3>
+<pre id="out4"></pre>
+
+<script>
+function show(id, line) { document.getElementById(id).textContent += line + "\n"; }
+
+// ---- 1. n! = n × (n−1)!, and 1! = 1. The function calls itself on a smaller problem. ----
+function factorial(n, depth) {
+  const pad = "    ".repeat(depth);
+  if (n <= 1) {                                         // the BASE CASE: no further call
+    show("out1", pad + "factorial(1) = 1          ← base case: the descent stops here");
+    return 1;
+  }
+  show("out1", pad + "factorial(" + n + ") needs factorial(" + (n - 1) + ")");
+  const result = n * factorial(n - 1, depth + 1);       // the RECURSIVE CASE
+  show("out1", pad + "factorial(" + n + ") = " + n + " × " + (result / n) + " = " + result);
+  return result;
+}
+factorial(5, 0);
+
+// ---- 2. A credit facility: this month's position is built from last month's, by business rules. ----
+// The schedule for month t is the schedule for month t−1 with one more row added.
+function schedule(t, P) {
+  if (t === 0) return [{ month: 0, balance: 0, interest: 0, drawn: 0, repaid: 0, note: "facility opens" }];
+  const rows = schedule(t - 1, P);                      // recursion: first get everything up to last month
+  const last = rows[rows.length - 1];
+  const interest = last.balance * P.rate;
+  let drawn = P.draw, repaid = P.repay, note = "";
+  // the business rules, applied to last month's position
+  if (last.balance > 0.8 * P.limit) { repaid = P.repay + 0.05 * last.balance; note = "over 80% used: extra repayment"; }
+  if (last.balance + interest + drawn - repaid > P.limit) { drawn = Math.max(0, P.limit - last.balance - interest + repaid); note = "draw capped at the limit"; }
+  rows.push({ month: t, balance: last.balance + interest + drawn - repaid, interest: interest, drawn: drawn, repaid: repaid, note: note });
+  return rows;
+}
+function credit() {
+  const P = { limit: +document.getElementById("limit").value, rate: +document.getElementById("rate").value,
+              draw: +document.getElementById("draw").value, repay: +document.getElementById("repay").value };
+  const rows = schedule(24, P);
+  let h = "<table><tr><th>month</th><th>interest</th><th>drawn</th><th>repaid</th><th>balance</th><th style='text-align:left'>rule</th></tr>";
+  for (const r of rows) h += "<tr><td>" + r.month + "</td><td>" + r.interest.toFixed(2) + "</td><td>" + r.drawn.toFixed(2) + "</td><td>" + r.repaid.toFixed(2) +
+                            "</td><td>" + r.balance.toFixed(2) + "</td><td style='text-align:left'>" + r.note + "</td></tr>";
+  document.getElementById("out2").innerHTML = h + "</table>";
+}
+document.getElementById("go").addEventListener("click", credit);
+credit();
+
+// ---- 3. The parse tree of lesson 6 is a recursive shape: a node holds smaller nodes. ----
+// tree for  mu <- a + b * (afternoon - 0.5)
+const tree = { kind: "+", left: { kind: "name", name: "a" },
+               right: { kind: "*", left: { kind: "name", name: "b" },
+                        right: { kind: "-", left: { kind: "name", name: "afternoon" }, right: { kind: "number", value: 0.5 } } } };
+function evaluate(node, env) {                          // one case per kind of node; calls itself for the branches
+  if (node.kind === "number") return node.value;
+  if (node.kind === "name") return env[node.name];
+  const L = evaluate(node.left, env), R = evaluate(node.right, env);
+  return node.kind === "+" ? L + R : node.kind === "-" ? L - R : node.kind === "*" ? L * R : L / R;
+}
+function countNodes(node) { return node.left ? 1 + countNodes(node.left) + countNodes(node.right) : 1; }
+function depth(node) { return node.left ? 1 + Math.max(depth(node.left), depth(node.right)) : 1; }
+function print(node) { return node.left ? "(" + print(node.left) + " " + node.kind + " " + print(node.right) + ")" : (node.name || String(node.value)); }
+show("out3", "The tree reads back as: " + print(tree));
+show("out3", "Nodes: " + countNodes(tree) + "    depth: " + depth(tree));
+show("out3", "With a = 3.8, b = -1.2, afternoon = 1:  mu = " + evaluate(tree, { a: 3.8, b: -1.2, afternoon: 1 }).toFixed(2));
+
+// ---- 4. Fibonacci: fib(n) = fib(n−1) + fib(n−2). Written naively it solves the same small problems again and again. ----
+let calls = 0;
+function fib(n) { calls++; return n < 2 ? n : fib(n - 1) + fib(n - 2); }
+const memo = {};
+let memoCalls = 0;
+function fibMemo(n) {
+  memoCalls++;
+  if (n in memo) return memo[n];                        // remembered: no new work
+  const v = n < 2 ? n : fibMemo(n - 1) + fibMemo(n - 2);
+  memo[n] = v;
+  return v;
+}
+for (const n of [10, 20, 30]) {
+  calls = 0; memoCalls = 0; for (const k in memo) delete memo[k];
+  const a = fib(n), b = fibMemo(n);
+  show("out4", "fib(" + n + ") = " + a + "    plain recursion: " + calls.toLocaleString() + " calls    with memory: " + memoCalls + " calls");
+}
+console.log("fib(25) with memory:", fibMemo(25));
+</script>
+
+</body>
+</html>
+</textarea>
+<textarea hidden id="c9"><!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  input { width: 4.5em; }
+  pre { background: #f2f4f3; padding: 10px; font-size: 13px; }
+  svg { background: #fff; border: 1px solid #dde3e0; }
+  text { font-size: 11px; fill: #333; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+</style>
+</head>
+<body>
+
+<h2>Learning XOR</h2>
+<p>XOR (exclusive or) is 1 when exactly one input is 1. No single straight line separates its 1s from its 0s, which is why it became the classic test for learning machines.</p>
+
+<h3>Part A: one neuron (a perceptron) learning AND, OR and XOR</h3>
+<pre id="outA"></pre>
+
+<h3>Part B: a small network with a hidden layer</h3>
+<p>hidden units <input id="H" value="3"> learning rate <input id="lr" value="1.0"> epochs <input id="ep" value="4000"> seed <input id="seed" value="3">
+<button id="go">Train</button></p>
+<div class="row"><div id="loss"></div><div id="map"></div></div>
+<pre id="outB"></pre>
+
+<script>
+const X = [[0, 0], [0, 1], [1, 0], [1, 1]];
+const GATES = { AND: [0, 0, 0, 1], OR: [0, 1, 1, 1], XOR: [0, 1, 1, 0] };
+function show(id, line) { document.getElementById(id).textContent += line + "\n"; }
+function makeRunif(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ---------- Part A: the perceptron (Rosenblatt, 1958) ----------
+// output = 1 if w1*x1 + w2*x2 + b > 0, else 0.  Learning rule: after each example, w += rate * (target - output) * x
+for (const gate in GATES) {
+  const y = GATES[gate];
+  let w = [0, 0], b = 0, epochs = 0, perfect = false;
+  for (epochs = 1; epochs <= 50 &amp;&amp; !perfect; epochs++) {
+    perfect = true;
+    for (let i = 0; i < 4; i++) {
+      const out = w[0] * X[i][0] + w[1] * X[i][1] + b > 0 ? 1 : 0;
+      const err = y[i] - out;
+      if (err !== 0) { perfect = false; w[0] += 0.1 * err * X[i][0]; w[1] += 0.1 * err * X[i][1]; b += 0.1 * err; }
+    }
+  }
+  const outs = X.map(function (x) { return w[0] * x[0] + w[1] * x[1] + b > 0 ? 1 : 0; });
+  show("outA", gate.padEnd(4) + " target " + y.join("") + "   learned " + outs.join("") + "   " +
+       (perfect ? "learned in " + (epochs - 1) + " passes" : "still wrong after 50 passes: no single line can split XOR"));
+}
+
+// ---------- Part B: a network 2 → H → 1, trained by gradient descent with backpropagation ----------
+const sigmoid = function (z) { return 1 / (1 + Math.exp(-z)); };
+
+function train() {
+  const H = Math.max(1, Math.round(+document.getElementById("H").value)), lr = +document.getElementById("lr").value;
+  const epochs = Math.round(+document.getElementById("ep").value), runif = makeRunif(+document.getElementById("seed").value);
+  const y = GATES.XOR;
+  // weights start small and random, so the hidden units differ from each other
+  const W1 = [], b1 = [], W2 = [];
+  for (let h = 0; h < H; h++) { W1.push([runif() * 2 - 1, runif() * 2 - 1]); b1.push(runif() * 2 - 1); W2.push(runif() * 2 - 1); }
+  let b2 = 0;
+
+  // forward pass: inputs → hidden activations → output probability
+  function forward(x) {
+    const hid = [];
+    for (let h = 0; h < H; h++) hid.push(sigmoid(W1[h][0] * x[0] + W1[h][1] * x[1] + b1[h]));
+    let z = b2; for (let h = 0; h < H; h++) z += W2[h] * hid[h];
+    return { hid: hid, out: sigmoid(z) };
+  }
+
+  const losses = [];
+  for (let e = 0; e < epochs; e++) {
+    let loss = 0;
+    // gradients, added up over the four examples
+    const gW1 = W1.map(function () { return [0, 0]; }), gb1 = new Array(H).fill(0), gW2 = new Array(H).fill(0);
+    let gb2 = 0;
+    for (let i = 0; i < 4; i++) {
+      const f = forward(X[i]);
+      loss += -(y[i] * Math.log(f.out) + (1 - y[i]) * Math.log(1 - f.out));   // cross-entropy: −log of the probability given to the right answer
+      // BACKPROPAGATION: the chain rule, from the output back to each weight
+      const dOut = f.out - y[i];                    // d loss / d z at the output
+      gb2 += dOut;
+      for (let h = 0; h < H; h++) {
+        gW2[h] += dOut * f.hid[h];
+        const dHid = dOut * W2[h] * f.hid[h] * (1 - f.hid[h]);   // pass the blame back through the sigmoid
+        gW1[h][0] += dHid * X[i][0]; gW1[h][1] += dHid * X[i][1]; gb1[h] += dHid;
+      }
+    }
+    // GRADIENT DESCENT: move every weight a little downhill
+    for (let h = 0; h < H; h++) { W1[h][0] -= lr * gW1[h][0]; W1[h][1] -= lr * gW1[h][1]; b1[h] -= lr * gb1[h]; W2[h] -= lr * gW2[h]; }
+    b2 -= lr * gb2;
+    losses.push(loss / 4);
+  }
+
+  // ---- results ----
+  document.getElementById("outB").textContent = "";
+  show("outB", "x1 x2  target  network");
+  X.forEach(function (x, i) { const p = forward(x).out; show("outB", " " + x[0] + "  " + x[1] + "     " + y[i] + "     " + p.toFixed(3) + "  → " + (p > 0.5 ? 1 : 0)); });
+  show("outB", "\nFinal average loss " + losses[losses.length - 1].toFixed(4) + " (0 is perfect; 0.693 is a coin flip)");
+  show("outB", "Hidden-unit weights (w1, w2, bias) and their weight on the output:");
+  for (let h = 0; h < H; h++) show("outB", "  unit " + (h + 1) + ": " + W1[h].map(function (v) { return v.toFixed(2).padStart(6); }).join("") + b1[h].toFixed(2).padStart(7) + "   → " + W2[h].toFixed(2));
+
+  // loss curve
+  const W = 340, Ht = 240, m = 36;
+  const sx = function (i) { return m + i * (W - m - 10) / (losses.length - 1); }, top = Math.max(0.8, losses[0]);
+  const sy = function (v) { return Ht - m - v * (Ht - m - 12) / top; };
+  let s = "<polyline fill='none' stroke='#0e6b5b' stroke-width='2' points='" + losses.filter(function (v, i) { return i % Math.ceil(losses.length / 300) === 0; })
+    .map(function (v, k) { return sx(k * Math.ceil(losses.length / 300)).toFixed(1) + "," + sy(v).toFixed(1); }).join(" ") + "'/>";
+  s += "<line x1='" + m + "' x2='" + (W - 10) + "' y1='" + sy(Math.log(2)) + "' y2='" + sy(Math.log(2)) + "' stroke='#b45309' stroke-dasharray='4 3'/><text x='" + (W - 12) + "' y='" + (sy(Math.log(2)) - 4) + "' text-anchor='end'>coin flip</text>";
+  s += "<line x1='" + m + "' x2='" + (W - 10) + "' y1='" + sy(0) + "' y2='" + sy(0) + "' stroke='#666'/><text x='" + (W / 2) + "' y='" + (Ht - 8) + "' text-anchor='middle'>epoch (0 to " + epochs + ")</text>";
+  s += "<text x='" + (m - 4) + "' y='" + (sy(0) + 4) + "' text-anchor='end'>0</text><text x='" + (m - 4) + "' y='" + (sy(top) + 4) + "' text-anchor='end'>" + top.toFixed(1) + "</text>";
+  document.getElementById("loss").innerHTML = "<svg width='" + W + "' height='" + Ht + "'>" + s + "</svg>";
+
+  // what the network believes everywhere on the square: darker = closer to 1
+  const S = 240, G = 30;
+  let s2 = "";
+  for (let a = 0; a < G; a++) for (let b = 0; b < G; b++) {
+    const x1 = -0.25 + 1.5 * (a + 0.5) / G, x2 = -0.25 + 1.5 * (b + 0.5) / G, p = forward([x1, x2]).out;
+    s2 += "<rect x='" + Math.round(a * S / G) + "' y='" + Math.round(S - (b + 1) * S / G) + "' width='" + (Math.round((a + 1) * S / G) - Math.round(a * S / G)) +
+          "' height='" + (Math.round(S - b * S / G) - Math.round(S - (b + 1) * S / G)) + "' fill='rgb(14,107,91)' fill-opacity='" + p.toFixed(3) + "' shape-rendering='crispEdges'/>";
+  }
+  X.forEach(function (x, i) {
+    const cx = (x[0] + 0.25) * S / 1.5, cy = S - (x[1] + 0.25) * S / 1.5;
+    s2 += "<circle cx='" + cx + "' cy='" + cy + "' r='9' fill='" + (y[i] ? "#ffffff" : "#b45309") + "' stroke='#111' stroke-width='1.5'/><text x='" + cx + "' y='" + (cy + 4) + "' text-anchor='middle'>" + y[i] + "</text>";
+  });
+  document.getElementById("map").innerHTML = "<svg width='" + S + "' height='" + S + "'>" + s2 + "</svg>";
+  console.log("loss after 1, 10, 100, 1000 epochs:", [0, 9, 99, 999].filter(function (k) { return k < losses.length; }).map(function (k) { return Number(losses[k].toFixed(4)); }));
+}
+document.getElementById("go").addEventListener("click", train);
+train();
+</script>
+
+</body>
+</html>
+</textarea>
+<textarea hidden id="c10"><!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: sans-serif; margin: 20px; line-height: 1.5; }
+  textarea { font-family: monospace; font-size: 12px; width: 15em; height: 6.5em; }
+  .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+  table { border-collapse: collapse; font-size: 12.5px; margin: 4px 0 14px; }
+  td, th { padding: 3px 8px; border: 1px solid #ddd; text-align: right; font-variant-numeric: tabular-nums; }
+  th { background: #eef2f0; }
+  h3 { margin-bottom: 4px; }
+  .err { color: #b00020; }
+</style>
+</head>
+<body>
+
+<h2>Self-attention by hand</h2>
+<p>Four words, each a row of four numbers (its embedding). Edit any matrix and press Compute.</p>
+<div class="row">
+  <div>X (words × 4)<br><textarea id="X">1.0  0.0  1.0  0.0
+0.0  2.0  0.0  2.0
+1.0  1.0  1.0  1.0
+0.0  1.0  0.0  2.0&lt;/textarea></div>
+  <div>W_Q (4 × 2)<br><textarea id="WQ">1  0
+0  1
+1  0
+0  1&lt;/textarea></div>
+  <div>W_K (4 × 2)<br><textarea id="WK">0  1
+1  0
+0  1
+1  0&lt;/textarea></div>
+  <div>W_V (4 × 2)<br><textarea id="WV">1  0
+0  1
+0  1
+1  0&lt;/textarea></div>
+</div>
+<p>Words: <input id="words" value="the café serves coffee" size="28">
+<label><input type="checkbox" id="mask"> causal mask (each word sees only itself and earlier words)</label>
+<button id="go">Compute</button></p>
+<div id="out"></div>
+
+<script>
+// ---- the matrix routines, written out ----
+function parseMatrix(text) {
+  return text.trim().split("\n").map(function (line) { return line.trim().split(/[\s,]+/).map(Number); });
+}
+function matmul(A, B) {                    // (n × k) times (k × m) gives (n × m)
+  if (A[0].length !== B.length) throw new Error("Cannot multiply a " + A.length + "×" + A[0].length + " matrix by a " + B.length + "×" + B[0].length + " one");
+  return A.map(function (row) {
+    return B[0].map(function (_, j) { let s = 0; for (let k = 0; k < B.length; k++) s += row[k] * B[k][j]; return s; });
+  });
+}
+function transpose(A) { return A[0].map(function (_, j) { return A.map(function (row) { return row[j]; }); }); }
+function softmaxRow(row) {                 // exponentiate, then divide by the total: positive weights that add to 1
+  const top = Math.max(...row);            // subtracting the largest value first avoids overflow; the result is the same
+  const e = row.map(function (v) { return Math.exp(v - top); });
+  const total = e.reduce(function (a, b) { return a + b; }, 0);
+  return e.map(function (v) { return v / total; });
+}
+
+// ---- showing a matrix as a table, optionally shaded by size ----
+function table(title, M, rowNames, colNames, shade) {
+  let h = "<h3>" + title + "</h3><table><tr><th></th>" + colNames.map(function (c) { return "<th>" + c + "</th>"; }).join("") + "</tr>";
+  M.forEach(function (row, i) {
+    h += "<tr><th>" + rowNames[i] + "</th>" + row.map(function (v) {
+      const bg = shade &amp;&amp; isFinite(v) ? " style='background:rgba(14,107,91," + (0.85 * v).toFixed(2) + ");color:" + (v > 0.55 ? "#fff" : "#111") + "'" : "";
+      return "<td" + bg + ">" + (isFinite(v) ? v.toFixed(3) : "−∞") + "</td>";
+    }).join("") + "</tr>";
+  });
+  return h + "</table>";
+}
+
+function compute() {
+  const out = document.getElementById("out");
+  try {
+    const X = parseMatrix(document.getElementById("X").value);
+    const WQ = parseMatrix(document.getElementById("WQ").value), WK = parseMatrix(document.getElementById("WK").value), WV = parseMatrix(document.getElementById("WV").value);
+    let words = document.getElementById("words").value.trim().split(/\s+/);
+    while (words.length < X.length) words.push("w" + (words.length + 1));
+    words = words.slice(0, X.length);
+    const dk = WK[0].length, dims = Array.from({ length: dk }, function (_, j) { return "d" + (j + 1); });
+
+    // 1. each word asks a question (query), offers a label (key) and carries content (value)
+    const Q = matmul(X, WQ), K = matmul(X, WK), V = matmul(X, WV);
+    // 2. how well each query matches each key: dot products, scaled by the square root of the key length
+    const S = matmul(Q, transpose(K)).map(function (row) { return row.map(function (v) { return v / Math.sqrt(dk); }); });
+    // 3. optional causal mask: a word may not look at later words (this is how text is generated, one word at a time)
+    if (document.getElementById("mask").checked) S.forEach(function (row, i) { row.forEach(function (_, j) { if (j > i) row[j] = -Infinity; }); });
+    // 4. softmax turns each row of scores into attention weights
+    const A = S.map(softmaxRow);
+    // 5. each word's output is a weighted average of the values it attends to
+    const O = matmul(A, V);
+
+    let h = "<div class='row'><div>" + table("Q = X · W_Q", Q, words, dims) + "</div><div>" + table("K = X · W_K", K, words, dims) + "</div><div>" + table("V = X · W_V", V, words, dims) + "</div></div>";
+    h += table("Scores = Q · Kᵀ / √" + dk + "   (row: the word asking, column: the word asked)", S, words, words);
+    h += table("Attention weights = softmax of each row   (each row adds to 1)", A, words, words, true);
+    h += table("Output = weights · V   (what each word takes away)", O, words, dims);
+    out.innerHTML = h;
+    const r = 1, c = A[r].indexOf(Math.max(...A[r]));
+    console.log("'" + words[r] + "' attends most to '" + words[c] + "' (weight " + A[r][c].toFixed(3) + ")");
+  } catch (e) { out.innerHTML = "<p class='err'>" + e.message + "</p>"; }
+}
+document.getElementById("go").addEventListener("click", compute);
+document.getElementById("mask").addEventListener("change", compute);
+compute();
+</script>
+
+</body>
+</html>
+</textarea>
+
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const lessons = Array.from(document.querySelectorAll('template[id^="n"]')).map((t, i) => ({
+    n: i + 1, title: t.dataset.title, short: t.dataset.short, notes: t.innerHTML, code: $('c' + (i + 1)).value
+  }));
+  const store = {
+    get(k) { try { return localStorage.getItem('ccl:' + k); } catch (e) { return null; } },
+    set(k, v) { try { if (v === null) localStorage.removeItem('ccl:' + k); else localStorage.setItem('ccl:' + k, v); } catch (e) {} }
+  };
+  let cur = 1;
+  const ta = $('code'), gut = $('gut'), log = $('log'), frame = $('frame');
+
+  // ---- tabs and notes ----
+  function drawTabs() {
+    $('tabs').innerHTML = lessons.map(L => `<button role="tab" aria-selected="${L.n === cur}" data-n="${L.n}" title="${L.title}"><span class="n">${L.n}</span>${L.short}${store.get('code' + L.n) !== null ? '<span class="dot" title="edited"></span>' : ''}</button>`).join('');
+  }
+  $('tabs').addEventListener('click', e => { const b = e.target.closest('button[data-n]'); if (b) go(+b.dataset.n); });
+  function go(n, fromHash) {
+    cur = Math.min(Math.max(1, n), lessons.length);
+    const L = lessons[cur - 1];
+    $('notes').innerHTML = L.notes + `<div class="pager">${cur > 1 ? `<button class="btn" data-go="${cur - 1}">◂ ${lessons[cur - 2].short}</button>` : '<span></span>'}${cur < lessons.length ? `<button class="btn" data-go="${cur + 1}">${lessons[cur].short} ▸</button>` : ''}</div>`;
+    $('notes').parentElement.scrollTop = 0;
+    ta.value = store.get('code' + cur) ?? L.code;
+    ta.scrollTop = 0; ta.scrollLeft = 0;
+    lines(); drawTabs(); savedNote(); run();
+    store.set('lesson', String(cur));
+    if (!fromHash && location.hash !== '#lesson-' + cur) history.replaceState(null, '', '#lesson-' + cur);
+  }
+  $('notes').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(+b.dataset.go); });
+  window.addEventListener('hashchange', () => { const m = location.hash.match(/^#lesson-(\d+)$/); if (m && +m[1] !== cur) go(+m[1], true); });
+
+  // ---- editor: line numbers, tab, auto-indent, run shortcut ----
+  function lines() {
+    const n = ta.value.split('\n').length;
+    let s = ''; for (let i = 1; i <= n; i++) s += i + '\n';
+    gut.textContent = s; gut.scrollTop = ta.scrollTop;
+  }
+  function pos() { const before = ta.value.slice(0, ta.selectionStart).split('\n'); $('pos').textContent = 'line ' + before.length + ', column ' + (before[before.length - 1].length + 1); }
+  function savedNote() { $('saved').textContent = store.get('code' + cur) !== null ? 'your edits are kept in this browser' : ''; }
+  let saveTimer = null;
+  ta.addEventListener('input', () => {
+    lines(); pos();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { const L = lessons[cur - 1]; store.set('code' + cur, ta.value === L.code ? null : ta.value); drawTabs(); savedNote(); }, 400);
+  });
+  ta.addEventListener('scroll', () => { gut.scrollTop = ta.scrollTop; });
+  ['click', 'keyup'].forEach(ev => ta.addEventListener(ev, pos));
+  function insert(text) { const a = ta.selectionStart, b = ta.selectionEnd; ta.setRangeText(text, a, b, 'end'); ta.dispatchEvent(new Event('input')); }
+  ta.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); run(); return; }
+    if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); insert('  '); return; }
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+      const lineStart = ta.value.lastIndexOf('\n', ta.selectionStart - 1) + 1, indent = ta.value.slice(lineStart).match(/^[ \t]*/)[0];
+      const prev = ta.value.slice(lineStart, ta.selectionStart).trimEnd();
+      e.preventDefault(); insert('\n' + indent + (/[{(\[]$/.test(prev) ? '  ' : ''));
+    }
+  });
+  function gotoLine(n) {
+    const ls = ta.value.split('\n'); let a = 0; for (let i = 0; i < n - 1 && i < ls.length; i++) a += ls[i].length + 1;
+    ta.focus(); ta.setSelectionRange(a, a + (ls[n - 1] || '').length);
+    ta.scrollTop = Math.max(0, (n - 5) * parseFloat(getComputedStyle(ta).lineHeight)); pos();
+  }
+
+  // ---- running: the page goes into a sandboxed frame; a one-line helper relays the console ----
+  const HOOK = '<script>(function(){function send(k,t){try{parent.postMessage({ccl:1,kind:k,text:t},"*")}catch(e){}}' +
+    'function fmt(v){if(typeof v==="string")return v;if(v instanceof Error)return v.name+": "+v.message;try{var s=JSON.stringify(v,function(k,x){return typeof x==="number"&&!isFinite(x)?String(x):x});if(s===undefined)return String(v);return s.length>4000?s.slice(0,4000)+" …":s}catch(e){return String(v)}}' +
+    '["log","info","warn","error"].forEach(function(m){var o=console[m];console[m]=function(){send(m==="info"?"log":m,[].slice.call(arguments).map(fmt).join(" "));if(o)o.apply(console,arguments)}});' +
+    'console.table=function(rows){try{var a=Array.isArray(rows)?rows:Object.keys(rows).map(function(k){return Object.assign({"(index)":k},rows[k])});var cols=[];a.forEach(function(r){Object.keys(r).forEach(function(c){if(cols.indexOf(c)<0)cols.push(c)})});var w=cols.map(function(c){return Math.max(c.length,Math.max.apply(null,a.map(function(r){return String(r[c]===undefined?"":r[c]).length})))});var line=function(cells){return cells.map(function(c,i){return String(c).padEnd(w[i])}).join("  ")};send("table",[line(cols),line(w.map(function(n){return "-".repeat(n)}))].concat(a.map(function(r){return line(cols.map(function(c){return r[c]===undefined?"":r[c]}))})).join("\\n"))}catch(e){send("log",fmt(rows))}};' +
+    'window.onerror=function(msg,src,line){send("error",msg+(line?"   (line "+line+")":""))};' +
+    'window.addEventListener("unhandledrejection",function(e){send("error",String(e.reason))})})();<\/script>';
+  function build(src) {
+    // insert the helper right after <head> (or at the very start) without adding a line, so error line numbers match the editor
+    const m = src.match(/<head[^>]*>/i);
+    return m ? src.slice(0, m.index + m[0].length) + HOOK + src.slice(m.index + m[0].length) : HOOK + src;
+  }
+  let runs = 0;
+  function run() {
+    log.innerHTML = ''; empty();
+    frame.srcdoc = build(ta.value);
+    runs++; $('ran').textContent = 'ran ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+  function empty() { if (!log.children.length) log.innerHTML = '<div class="empty">Messages from console.log appear here.</div>'; }
+  window.addEventListener('message', e => {
+    if (e.source !== frame.contentWindow || !e.data || !e.data.ccl) return;
+    const ph = log.querySelector('.empty'); if (ph) ph.remove();
+    const d = document.createElement('div');
+    d.className = e.data.kind === 'table' ? 't' : e.data.kind;
+    d.textContent = (e.data.kind === 'error' ? '✕ ' : e.data.kind === 'warn' ? '! ' : '') + e.data.text;
+    const lm = e.data.kind === 'error' && /\(line (\d+)\)$/.exec(e.data.text);
+    if (lm) { d.title = 'Show line ' + lm[1] + ' in the editor'; d.addEventListener('click', () => gotoLine(+lm[1])); }
+    log.appendChild(d); log.scrollTop = log.scrollHeight;
+  });
+  $('run').addEventListener('click', run);
+  $('clear').addEventListener('click', () => { log.innerHTML = ''; empty(); });
+
+  // ---- reset, copy, save ----
+  let resetArmed = false, resetTimer = null;
+  $('reset').addEventListener('click', () => {
+    if (!resetArmed) { resetArmed = true; $('reset').textContent = 'Discard edits?'; resetTimer = setTimeout(() => { resetArmed = false; $('reset').textContent = 'Reset'; }, 3000); return; }
+    clearTimeout(resetTimer); resetArmed = false; $('reset').textContent = 'Reset';
+    store.set('code' + cur, null); ta.value = lessons[cur - 1].code; lines(); drawTabs(); savedNote(); run();
+  });
+  function flash(btn, text) { const t = btn.textContent; btn.textContent = text; setTimeout(() => { btn.textContent = t; }, 1400); }
+  $('copy').addEventListener('click', () => {
+    const done = () => flash($('copy'), 'Copied');
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, () => { ta.focus(); ta.select(); flash($('copy'), 'Press Ctrl+C'); });
+    else { ta.focus(); ta.select(); flash($('copy'), 'Press Ctrl+C'); }
+  });
+  let downloads = null;
+  if (window.claude && window.claude.use) window.claude.use('downloads').then(d => { downloads = d; }, () => {});
+  $('save').addEventListener('click', async () => {
+    const name = 'cafe-lesson-' + cur + '.html';
+    if (downloads) { try { await downloads.save({ filename: name, data: ta.value }); flash($('save'), 'Saved'); } catch (e) { flash($('save'), 'Not saved'); } return; }
+    if (window.claude) { flash($('save'), 'Not available here'); return; }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ta.value], { type: 'text/html' })); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    flash($('save'), 'Saved');
+  });
+
+  // ---- start ----
+  const hm = location.hash.match(/^#lesson-(\d+)$/);
+  go(hm ? +hm[1] : +(store.get('lesson') || 1), !!hm);
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Café</title>
+<style>
+/* Layout: a quiet home page. The studios as three cards, your own pages below, and the drive's folders on the right. */
+:root {
+  --bg: #eef2f0; --surface: #ffffff; --ink: #1b2422; --muted: #5a6a65; --line: #d3dcd8;
+  --accent: #0e6b5b; --accent-ink: #ffffff; --accent-soft: #dcece7; --warn: #8a5a00;
+  --display: "Bahnschrift", "Segoe UI Variable Display", "Avenir Next", "Helvetica Neue", system-ui, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #111816; --surface: #182120; --ink: #e3ebe8; --muted: #9baca7; --line: #2a3633;
+  --accent: #4cb59d; --accent-ink: #0b1513; --accent-soft: #1d3530; --warn: #e0b45a; color-scheme: dark } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 24px 40px; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; }
+header { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+h1 { font-family: var(--display); font-size: 30px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+.sub { color: var(--muted); }
+.status { margin-left: auto; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
+h2 { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 30px; }
+a.card { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; color: inherit; text-decoration: none; }
+a.card:hover, a.card:focus-visible { border-color: var(--accent); outline: none; }
+a.card b { font-family: var(--display); font-size: 18px; font-weight: 600; }
+a.card span { color: var(--muted); font-size: 14px; }
+a.card em { font-style: normal; font-family: var(--mono); font-size: 12px; color: var(--accent); margin-top: auto; padding-top: 6px; }
+.own { background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; padding: 14px 18px; color: var(--muted); font-size: 14px; }
+.own a { color: var(--accent); }
+.own ul { margin: 6px 0 0; padding-left: 18px; }
+aside { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.panel .top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.panel .top b { flex: 1; }
+.files { list-style: none; margin: 0; padding: 0; font-size: 13.5px; }
+.files li { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.files li:last-child { border-bottom: 0; }
+.files .n { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.files .m { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.empty { color: var(--muted); font-size: 13px; font-style: italic; }
+button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+.path { font-family: var(--mono); font-size: 12px; color: var(--muted); word-break: break-all; }
+.note { font-size: 13px; color: var(--muted); }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } .status { margin-left: 0; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Café</h1>
+    <span class="sub">Bayesian studios, stock-and-flow dynamics and the code underneath</span>
+    <span class="status" id="status"><i></i>Offline</span>
+  </header>
+
+  <main>
+    <h2>Studios</h2>
+    <div class="cards">
+      <a class="card" href="apps/cafe-studio-bayes.html">
+        <b>Café Studio Bayes</b>
+        <span>McElreath-style models sampled with NUTS: priors, diagnostics, PSIS-LOO, predictions, dynamics, Stan code and a full report.</span>
+        <em>ulam( ) · ddt( ) · dordlogit( )</em>
+      </a>
+      <a class="card" href="apps/cafe-dynamics-studio.html">
+        <b>Cafe Dynamics Studio</b>
+        <span>Draw stocks, flows and Godley tables; simulate, find loops and equilibria, and estimate from data.</span>
+        <em>stocks · flows · loops</em>
+      </a>
+      <a class="card" href="apps/cafe-code-lab.html">
+        <b>Café Code Lab</b>
+        <span>Ten short lessons in JavaScript, from reading a CSV to a parser, HMC by hand, learning XOR and self-attention.</span>
+        <em>lessons 1–10</em>
+      </a>
+    </div>
+
+    <h2>Your own pages</h2>
+    <div class="own" id="own">Put any standalone .html page in the <b>Apps</b> folder of Cafe Data and it appears here.</div>
+  </main>
+
+  <aside>
+    <div class="panel" id="drive">
+      <div class="top"><b>Cafe Data on this drive</b><button id="reveal" title="Open the folder in Explorer or Finder">Open folder</button></div>
+      <div class="path" id="where">…</div>
+      <p class="note">Projects you save from the studios go to <b>Projects</b>, data files to <b>Data</b>, everything else to <b>Downloads</b>. Open them again with each studio's Open buttons.</p>
+    </div>
+    <div class="panel"><div class="top"><b>Projects</b><button data-reveal="Projects">Show</button></div><ul class="files" id="f-Projects"></ul></div>
+    <div class="panel"><div class="top"><b>Data</b><button data-reveal="Data">Show</button></div><ul class="files" id="f-Data"></ul></div>
+    <div class="panel"><div class="top"><b>Downloads</b><button data-reveal="Downloads">Show</button></div><ul class="files" id="f-Downloads"></ul></div>
+  </aside>
+</div>
+
+<script>
+(function () {
+  const D = window.cafeDesktop;            // present only inside the Café app
+  const $ = id => document.getElementById(id);
+  if (!D) {
+    // opened as a plain file in an ordinary browser: the studios still work, the drive panels do not
+    $('status').innerHTML = '<i style="background:var(--warn)"></i>Opened in a browser';
+    document.querySelectorAll('aside .panel').forEach(p => { p.hidden = true; });
+    $('own').textContent = 'Open the Café app to list your own pages and the Cafe Data folder.';
+    return;
+  }
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const size = b => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(0) + ' KB' : (b / 1048576).toFixed(1) + ' MB';
+  const when = t => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+
+  async function refresh() {
+    const info = await D.info();
+    $('where').textContent = info.dataDir;
+    $('status').innerHTML = '<i></i>Offline' + (info.blocked ? ' · ' + info.blocked + ' outside request' + (info.blocked > 1 ? 's' : '') + ' blocked' : '');
+    $('status').title = 'Café ' + info.version + ' · Electron ' + info.electron + ' · Chromium ' + info.chrome;
+    for (const sub of ['Projects', 'Data', 'Downloads']) {
+      const files = (await D.list(sub)).filter(f => !f.folder);
+      $('f-' + sub).innerHTML = files.length ? files.slice(0, 12).map(f => `<li><span class="n" title="${esc(f.name)}">${esc(f.name)}</span><span class="m">${size(f.size)} · ${when(f.modified)}</span></li>`).join('') +
+        (files.length > 12 ? `<li class="empty">and ${files.length - 12} more</li>` : '') : '<li class="empty">Nothing yet</li>';
+    }
+    const pages = (await D.list('Apps')).filter(f => !f.folder && /\.html?$/i.test(f.name));
+    if (pages.length) $('own').innerHTML = 'From the <b>Apps</b> folder:<ul>' + pages.map(f => `<li><a href="cafe://data/Apps/${encodeURIComponent(f.name)}">${esc(f.name.replace(/\.html?$/i, ''))}</a></li>`).join('') + '</ul>';
+  }
+  $('reveal').addEventListener('click', () => D.reveal(''));
+  document.querySelectorAll('[data-reveal]').forEach(b => b.addEventListener('click', () => D.reveal(b.dataset.reveal)));
+  window.addEventListener('focus', refresh);
+  refresh();
+})();
+</script>
+</body>
+</html>
