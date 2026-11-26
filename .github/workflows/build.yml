@@ -1,0 +1,39 @@
+# Builds Café for Windows, macOS and Linux on GitHub's machines. Push this folder to a GitHub repository,
+# open Actions, run "Build Café", and download the three results from the run's Artifacts.
+name: Build Café
+on: workflow_dispatch
+jobs:
+  build:
+    strategy:
+      fail-fast: false          # let every system finish, so one failure does not cancel the others
+      matrix:
+        include:
+          - os: windows-latest
+            cmd: dist:win
+          - os: macos-latest
+            cmd: dist:mac
+          - os: ubuntu-latest
+            cmd: dist:linux
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"   # no paid signing certificate: do not look for one
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Tools the Linux packager needs
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && (sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2)
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run ${{ matrix.cmd }} -- --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cafe-${{ matrix.os }}
+          if-no-files-found: error
+          path: |
+            dist/*.exe
+            dist/*.zip
+            dist/*.AppImage
